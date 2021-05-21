@@ -1,4 +1,5 @@
 const { app, BrowserWindow, Menu } = require('electron')
+const { basic } = require('@/modules/basic')
 const path = require('path')
 
 function createWindow () {
@@ -7,7 +8,6 @@ function createWindow () {
     height: 600,
     webPreferences: {
       nodeIntegration: false,
-      // preload: path.join(app.getAppPath(), 'preload.js')
     }
   })
   
@@ -30,5 +30,3 @@ app.on('window-all-closed', () => {
     app.quit()
   }
 })
-
-// Menu.setApplicationMenu(Menu.buildFromTemplate([])) /** 隐藏菜单栏 */

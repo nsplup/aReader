@@ -25,12 +25,12 @@ module.exports = {
         test: /\.(s[ac]ss|css)$/i,
         use: [
           { loader: 'style-loader' },
-          {
-            loader: 'px2-loader',
-            options: {
-              datum: 480
-            }
-          },
+          // {
+          //   loader: 'px2-loader',
+          //   options: {
+          //     datum: 480
+          //   }
+          // },
           { loader: 'css-loader', options: { importLoaders: 2 } },
           { loader: 'postcss-loader', options: { plugins: [require('autoprefixer')] } },
           { loader: 'sass-loader' }
@@ -69,6 +69,7 @@ module.exports = {
     alias: {
       '@': path.resolve(__dirname, './src/main'),
       '@renderer': path.resolve(__dirname, './src/renderer'),
+      '@static': path.resolve(__dirname, './src/static')
     }
   },
 }

@@ -10,5 +10,21 @@
 
 
 
+# License
 
+```
+镜览
+Apache 2.0
+Copyright 2021 Luke Pan
+https://github.com/nsplup/aReader
+
+unDraw
+Copyright 2021 Katerina Limpitsouni
+https://undraw.co/
+
+REMIX ICON
+Apache 2.0
+Copyright 2020 Remix Design
+http://remixicon.com/
+```
 

@@ -1,0 +1,10 @@
+<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" >
+<svg xmlns="http://www.w3.org/2000/svg">
+<defs>
+    <font id="remixicon" horiz-adv-x="1200">
+    <font-face font-family="remixicon"
+        units-per-em="1200" ascent="1200"
+        descent="0" />
+    <missing-glyph horiz-adv-x="0" /><glyph glyph-name="file-add-line"
+            unicode="&#xECC9;"
+            horiz-adv-x="1200" d="M750 1000H250V200H950V800H750V1000zM150 1050.4C150 1077.8 172.35 1100 199.95 1100H800L1050 850V150.3499999999999A50 50 0 0 0 1000.35 100H199.65A50 50 0 0 0 150 149.6000000000001V1050.4zM550 650V800H650V650H800V550H650V400H550V550H400V650H550z" /></font></defs></svg>

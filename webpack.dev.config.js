@@ -9,6 +9,11 @@ const base = merge(conf, {
     path: outputPath,
   },
   devtool: 'source-map',
+  devServer: {
+    compress: true,
+    port: 8080,
+    hot: true
+  },
 })
 
 module.exports = [
@@ -19,7 +24,7 @@ module.exports = [
     },
   }),
   merge(base, {
-    target: 'electron-renderer',
+    target: 'web',
     entry: {
       renderer: './src/renderer/main.js'
     },
