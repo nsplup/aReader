@@ -7,11 +7,11 @@ function bind (App: App) {
   ipcMain.on(OPEN_DIALOG, () => {
     dialog.showOpenDialog({
       filters: [{ name: 'eBook', extensions: ['epub', 'txt'] }],
-      properties: ['openFile']
+      properties: ['openFile', 'multiSelections']
     })
       .then(({ filePaths }) => {
         if (filePaths.length > 0) {
-          console.log(filePaths[0], path.resolve('./'))
+          console.log(filePaths.join('\n'))
         }
       })
   })

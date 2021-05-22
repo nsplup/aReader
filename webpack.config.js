@@ -4,6 +4,12 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const { HotModuleReplacementPlugin } = require('webpack')
 
 module.exports = {
+  entry: {
+    vendor: [
+      'react',
+      'react-dom',
+    ],
+  },
   module: {
     rules: [
       {
@@ -71,6 +77,7 @@ module.exports = {
       '@renderer': path.resolve(__dirname, './src/renderer'),
       '@static': path.resolve(__dirname, './src/static'),
       '@constants': path.resolve(__dirname, './src/constants'),
+      '@utils': path.resolve(__dirname, './src/utils'),
     }
   },
 }

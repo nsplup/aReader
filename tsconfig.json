@@ -16,6 +16,7 @@
       "@renderer/*": ["src/renderer/*"],
       "@static/*": ["src/static/*"],
       "@constants": ["src/constants"],
+      "@utils/*": ["src/utils/*"]
     }
   }
 }

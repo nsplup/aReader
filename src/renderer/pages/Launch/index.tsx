@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { ipcRenderer } from 'electron'
 
 import { OPEN_DIALOG } from '@constants'
+
+import Book from './Book'
 
 const illustration = require('@static/illustration/undraw_book_lover_mkck.svg').default
 const logo = require('@static/aReader_icon.png').default
@@ -10,14 +12,22 @@ const logo = require('@static/aReader_icon.png').default
 export default function Launch (): JSX.Element {
   const handleOpenDialog = () => ipcRenderer.send(OPEN_DIALOG)
 
+
   return (
     <div className="flex-box launch-wrapper" style={{ userSelect: "none" }}>
-      <button className="flex-box common-button" onClick={ handleOpenDialog }>
+      <button className="flex-box common-button common-active" onClick={ handleOpenDialog }>
         <i className="ri-file-add-line"></i>
         导入书籍
       </button>
       <section className="launch-library">
         <header className="launch-title">最近阅读</header>
+        <div className="launch-history fix">
+          {
+            [...new Array(10).keys()].map(() => (
+              <Book cover={ false } title="异世界转生，地雷！异世界转生，地雷！" format="EPUB" progress={ 50 } />
+            ))
+          }
+        </div>
       </section>
       <section className="launch-library">
         <header className="launch-title">书架</header>
@@ -27,10 +37,11 @@ export default function Launch (): JSX.Element {
         <img src={ illustration } width="400" draggable="false"/>
         <p className="common-description">书图镜览，辞章讨论。</p>
       </div>
+      {/* 底部 Logo */}
       <div
         className="flex-box"
         style={{
-          justifyContent: 'flex-start',
+          justifyContent: 'flex-end',
           alignItems: 'flex-end',
           width: '100%',
           padding: '20px',
