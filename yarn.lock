@@ -1077,6 +1077,13 @@
     "@types/history" "*"
     "@types/react" "*"
 
+"@types/react-slider@^1.1.2":
+  version "1.1.2"
+  resolved "https://registry.nlark.com/@types/react-slider/download/@types/react-slider-1.1.2.tgz#a8ada09195e9de5302b7b65d4c1d4da8e0550417"
+  integrity sha1-qK2gkZXp3lMCt7ZdTB1NqOBVBBc=
+  dependencies:
+    "@types/react" "*"
+
 "@types/react@*":
   version "17.0.6"
   resolved "https://registry.nlark.com/@types/react/download/@types/react-17.0.6.tgz?cache=0&sync_timestamp=1621357607951&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40types%2Freact%2Fdownload%2F%40types%2Freact-17.0.6.tgz#0ec564566302c562bf497d73219797a5e0297013"
@@ -5043,6 +5050,11 @@ react-router@5.2.0:
     react-is "^16.6.0"
     tiny-invariant "^1.0.2"
     tiny-warning "^1.0.0"
+
+react-slider@^1.1.4:
+  version "1.1.4"
+  resolved "https://registry.nlark.com/react-slider/download/react-slider-1.1.4.tgz#08b55f9be3e04cc10ae00cc3aedb6891dffe9bf3"
+  integrity sha1-CLVfm+PgTMEK4AzDrttokd/+m/M=
 
 react@^16.13.1:
   version "16.14.0"

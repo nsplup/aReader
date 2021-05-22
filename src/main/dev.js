@@ -5,12 +5,13 @@ const path = require('path')
 function createWindow () {
   const win = new BrowserWindow({
     Width: 950,
-    minWidth: 430,
+    minWidth: 650,
     Height: 600,
     minHeight: 430,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
+      enableRemoteModule: true,
     }
   })
   
