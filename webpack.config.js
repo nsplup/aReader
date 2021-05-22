@@ -69,7 +69,8 @@ module.exports = {
     alias: {
       '@': path.resolve(__dirname, './src/main'),
       '@renderer': path.resolve(__dirname, './src/renderer'),
-      '@static': path.resolve(__dirname, './src/static')
+      '@static': path.resolve(__dirname, './src/static'),
+      '@constants': path.resolve(__dirname, './src/constants'),
     }
   },
 }

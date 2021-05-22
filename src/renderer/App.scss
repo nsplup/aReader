@@ -15,22 +15,22 @@ body, html, #root {
 }
 
 /*滚动条整体部分,必须要设置*/
-::-webkit-scrollbar{
+::-webkit-scrollbar {
   width: 8px;
   height: 8px;
   background-color: transparent;
 }
 /*滚动条的轨道*/
-::-webkit-scrollbar-track{
+::-webkit-scrollbar-track {
   background-color: transparent;
 }
 /*滚动条的滑块按钮*/
-::-webkit-scrollbar-thumb{
+::-webkit-scrollbar-thumb {
   border-radius: 10px;
   background-color: $common-text-description;
 }
 /*滚动条的上下两端的按钮*/
-::-webkit-scrollbar-button{
+::-webkit-scrollbar-button {
   display: none;
 }
 
@@ -51,7 +51,7 @@ body, html, #root {
   border: unset;
   border-radius: 10px;
   outline: none;
-  
+
   color: #ffffff;
 
   background-color: $primary-color;

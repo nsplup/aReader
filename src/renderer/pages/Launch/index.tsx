@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react'
+import { ipcRenderer } from 'electron'
+
+import { OPEN_DIALOG } from '@constants'
 
 const illustration = require('@static/illustration/undraw_book_lover_mkck.svg').default
 const logo = require('@static/aReader_icon.png').default
 
 
 export default function Launch (): JSX.Element {
+  const handleOpenDialog = () => ipcRenderer.send(OPEN_DIALOG)
+
   return (
     <div className="flex-box launch-wrapper" style={{ userSelect: "none" }}>
-      <button className="flex-box common-button">
+      <button className="flex-box common-button" onClick={ handleOpenDialog }>
         <i className="ri-file-add-line"></i>
         导入书籍
       </button>

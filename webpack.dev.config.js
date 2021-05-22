@@ -24,7 +24,7 @@ module.exports = [
     },
   }),
   merge(base, {
-    target: 'web',
+    target: 'electron-renderer',
     entry: {
       renderer: './src/renderer/main.js'
     },

@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "webpack-dev-server --config webpack.dev.config.js",
-    "buildDev": "webpack --config webpack.dev.config.js && electron ./build/dist/dev/main.js --inspect"
+    "buildDev": "webpack --config webpack.dev.config.js && electron ./build/dist/dev/main.js"
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",

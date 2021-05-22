@@ -1,5 +1,3 @@
-"use strict";
-
 export function classNames(...classes: any): string {
   return [...new Set(
     classes

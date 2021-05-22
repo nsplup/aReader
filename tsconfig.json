@@ -14,7 +14,8 @@
     "paths": {
       "@/*": ["src/main/*"],
       "@renderer/*": ["src/renderer/*"],
-      "@static/*": ["src/static/*"]
+      "@static/*": ["src/static/*"],
+      "@constants": ["src/constants"],
     }
   }
 }
