@@ -36,4 +36,4 @@ app.on('window-all-closed', () => {
   }
 })
 
-basic.bind(app)
+basic.init()

@@ -1,4 +1,4 @@
-import { App, ipcMain, dialog, BrowserWindow } from 'electron'
+import { ipcMain, dialog, BrowserWindow } from 'electron'
 import { getFonts } from 'font-list'
 import {
   OPEN_DIALOG,
@@ -10,7 +10,7 @@ import path from 'path'
 // const workpool = require('workerpool')
 // const pool = workpool.pool()
 
-function bind (App: App) {
+function init () {
   /** 「导入书籍」按钮事件处理 */
   ipcMain.on(OPEN_DIALOG, () => {
     dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
@@ -34,6 +34,6 @@ function bind (App: App) {
 }
 
 
-const basic = { bind }
+const basic = { init }
 
 export { basic }
