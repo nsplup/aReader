@@ -12,6 +12,7 @@
     "@types/react-redux": "^7.1.9",
     "@types/react-router-dom": "^5.1.5",
     "@types/react-slider": "^1.1.2",
+    "@types/react-window": "^1.8.3",
     "@types/redux": "^3.6.0",
     "@types/redux-saga": "^0.10.5",
     "autoprefixer": "^9.8.0",
@@ -35,12 +36,15 @@
     "webpack-merge": "^5.7.3"
   },
   "dependencies": {
+    "font-list": "^1.2.14",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-redux": "^7.2.0",
     "react-router-dom": "^5.2.0",
     "react-slider": "^1.1.4",
+    "react-window": "^1.8.6",
     "redux": "^4.0.5",
-    "redux-saga": "^1.1.3"
+    "redux-saga": "^1.1.3",
+    "workerpool": "^6.1.4"
   }
 }

@@ -21,7 +21,7 @@ export default function Book ({ cover, title, format, progress }: CInfomation): 
             : (<img src={ placeholder } width="80" draggable="false"/>)
         }
       </div>
-      <p className="book-title">{ title }</p>
+      <p className="common-ellipsis book-title">{ title }</p>
       <p className="book-description">{ format }</p>
     </div>
   )

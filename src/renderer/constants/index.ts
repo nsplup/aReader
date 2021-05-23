@@ -1,0 +1,5 @@
+const GENERATE_FONTS = 'GENERATE_FONTS'
+
+export {
+  GENERATE_FONTS,
+}

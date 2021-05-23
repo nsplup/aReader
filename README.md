@@ -26,5 +26,10 @@ REMIX ICON
 Apache 2.0
 Copyright 2020 Remix Design
 http://remixicon.com/
+
+workerpool
+Apache 2.0
+Copyright 2014-2020 Jos de Jong wjosdejong@gmail.com
+https://github.com/josdejong/workerpool
 ```
 

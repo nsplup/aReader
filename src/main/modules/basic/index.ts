@@ -1,6 +1,14 @@
 import { App, ipcMain, dialog, BrowserWindow } from 'electron'
-import { OPEN_DIALOG } from '@constants'
+import { getFonts } from 'font-list'
+import {
+  OPEN_DIALOG,
+  WINDOW_READY,
+  FONTS_READY,
+} from '@constants'
 import path from 'path'
+
+// const workpool = require('workerpool')
+// const pool = workpool.pool()
 
 function bind (App: App) {
   /** 「导入书籍」按钮事件处理 */
@@ -13,6 +21,14 @@ function bind (App: App) {
         if (filePaths.length > 0) {
           console.log(filePaths.join('\n'))
         }
+      })
+  })
+  
+  /** 获取字体列表 */
+  ipcMain.once(WINDOW_READY, (event: Electron.IpcMainEvent) => {
+    getFonts({ disableQuoting: true })
+      .then(fonts => {
+        event.reply(FONTS_READY, fonts)
       })
   })
 }

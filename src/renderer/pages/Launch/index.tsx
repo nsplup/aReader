@@ -1,18 +1,43 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { connect } from 'react-redux'
 import { ipcRenderer } from 'electron'
 
-import { OPEN_DIALOG } from '@constants'
+import {
+  OPEN_DIALOG,
+  FONTS_READY,
+} from '@constants'
 
 import Book from './Book'
 import Reader from '../Reader'
+import { generateFonts } from '@renderer/actions'
+import { WINDOW_READY } from '@constants'
 
 const illustration = require('@static/illustration/undraw_book_lover_mkck.svg').default
 const logo = require('@static/aReader_icon.png').default
 
+interface Props {
+  fonts: Array<string>
+  generateFonts: (fonts: Array<string>) => any
+}
 
-export default function Launch (): JSX.Element {
+
+function Launch ({
+  fonts,
+  generateFonts,
+}: Props): JSX.Element {
   const handleOpenDialog = () => ipcRenderer.send(OPEN_DIALOG)
 
+  useEffect(() => {
+    const listener = (event: Electron.IpcRendererEvent, fonts: Array<string>) => {
+      generateFonts(fonts)
+    }
+    ipcRenderer.once(FONTS_READY, listener)
+    ipcRenderer.send(WINDOW_READY)
+
+    // return () => {
+    //   ipcRenderer.off(FONTS_READY, listener)
+    // }
+  }, [])
 
   return (
     <>
@@ -56,7 +81,15 @@ export default function Launch (): JSX.Element {
           </div>
         </div>
       </div>
-      <Reader/>
+      <Reader fonts={ fonts }/>
     </>
   )
 }
+
+const mapStateToProps = ({ fonts }: any) => ({ fonts })
+const mapDispatchToProps = (dispatch: any) => ({
+  generateFonts: (fonts: Array<string>) => dispatch(generateFonts(fonts))
+})
+const connectedLaunch = connect(mapStateToProps, mapDispatchToProps)(Launch)
+
+export default connectedLaunch
