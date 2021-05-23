@@ -107,7 +107,7 @@ function Launch ({
           </div>
         </div>
       </div>
-      {/* <Reader fonts={ fonts }/> */}
+      <Reader fonts={ fonts }/>
       <div
         className="common-mask"
         style={{

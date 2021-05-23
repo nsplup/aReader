@@ -19,13 +19,14 @@ const CustomSlider = (props: any) => (
   />
 )
 
-const ColorPlanRender = (text: string, background: string) => (
+const ColorPlanRender = (text: string, background: string, index: number) => (
   <div
     style={{
       color: text,
       backgroundColor: background
     }}
     className="flex-box s-m-color-plan common-active" /** s-m-color-plan-current */
+    data-plan={ index }
   >
     A
   </div>
@@ -49,6 +50,8 @@ interface Props {
 export default function Reader ({
   fonts,
 }: Props): JSX.Element {
+  const [textColor, setTextColor] = useState('')
+  const [backgroundColor, setBackgroundColor] = useState('')
 
   return (
     <div className="reader-wrapper">
@@ -136,7 +139,7 @@ export default function Reader ({
               }}
             >
               {
-                colorPlan.map((plan) => ColorPlanRender(plan[0], plan[1]))
+                colorPlan.map((plan, index) => ColorPlanRender(plan[0], plan[1], index))
               }
             </div>
             <div
@@ -149,14 +152,23 @@ export default function Reader ({
             >
               <div className="s-m-color-picker">
                 <p className="s-m-title">文本颜色</p>
-                <HexColorPicker/>
+                <HexColorPicker onChange={ (val) => setTextColor(val) }/>
               </div>
               <div className="s-m-color-picker" style={{ marginRight: 'unset' }}>
                 <p className="s-m-title">背景颜色</p>
-                <HexColorPicker/>
+                <HexColorPicker onChange={ (val) => setBackgroundColor(val) }/>
               </div>
-              <div className="flex-box" style={{ width: '100px' }}>
-                { ColorPlanRender("#000000", "#ffffff") }
+              <div
+                className="flex-box"
+                style={{
+                  flexDirection: 'column',
+                  justifyContent: 'space-around',
+                  width: '100px',
+                  height: '130px',
+                }}
+              >
+                { ColorPlanRender(textColor, backgroundColor, -1) }
+                <p className="s-m-title">自定义方案</p>
               </div>
             </div>
           </div>
