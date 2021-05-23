@@ -162,7 +162,7 @@ export default function Reader ({
           </div>
         </div>
         {/* 全文检索 */}
-        <div className="flex-box s-m-search">
+        <div style={{ display: 'none' }} className="flex-box s-m-search">
           <p className="s-m-title">全文检索</p>
           <div style={{ position: 'relative' }}>
             <button className="flex-box s-m-search-btn">

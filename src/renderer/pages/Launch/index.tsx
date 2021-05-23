@@ -41,7 +41,7 @@ function Launch ({
 
   return (
     <>
-      <div className="flex-box launch-wrapper" style={{ userSelect: "none", display: 'none' }}>
+      <div className="flex-box launch-wrapper" style={{ userSelect: "none" }}>
         <button className="flex-box common-button common-active" onClick={ handleOpenDialog }>
           <i className="ri-file-add-line"></i>
           导入书籍
@@ -81,7 +81,7 @@ function Launch ({
           </div>
         </div>
       </div>
-      <Reader fonts={ fonts }/>
+      {/* <Reader fonts={ fonts }/> */}
     </>
   )
 }

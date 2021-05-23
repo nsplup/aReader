@@ -23,6 +23,7 @@ export default function Book ({ cover, title, format, progress }: CInfomation): 
       </div>
       <p className="common-ellipsis book-title">{ title }</p>
       <p className="book-description">{ format }</p>
+      <p className="book-progress">{ progress }</p>
     </div>
   )
 }
