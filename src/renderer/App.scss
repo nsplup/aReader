@@ -4,6 +4,7 @@
 body {
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
 }
 
 body, html, #root {
@@ -426,5 +427,37 @@ body, html, #root {
       opacity: 1;
       visibility: visible;
     }
+  }
+  &-contextmenu {
+    flex-direction: column;
+    visibility: hidden;
+    position: absolute;
+    z-index: 1001;
+    user-select: none;
+    padding: 10px;
+    border-radius: 8px;
+    color: #5a5a5a;
+    background: $primary-color-pale;
+    transform: scaleY(.7);
+    transform-origin: top;
+    transition: transform .15s ease-out;
+    box-shadow: 0 0 8px 0 rgba(50, 50, 50, .4);
+  }
+  &-c-item {
+    width: 80px;
+    padding: 10px;
+    border-radius: 6px;
+
+    &:hover {
+      background-color: rgba(50, 50, 50, .1);
+    }
+  }
+  &-c-active {
+    visibility: visible;
+    transform: scaleY(1);
+  }
+  &-c-title {
+    margin: 0;
+    font-size: 13px;
   }
 }

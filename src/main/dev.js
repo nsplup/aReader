@@ -4,6 +4,7 @@ const path = require('path')
 
 function createWindow () {
   const win = new BrowserWindow({
+    title: '镜览',
     Width: 950,
     minWidth: 650,
     Height: 600,
