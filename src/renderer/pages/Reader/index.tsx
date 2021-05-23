@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { FixedSizeList  } from 'react-window'
+import { HexColorPicker } from 'react-colorful'
 import Slider from 'react-slider'
 
 const CustomSlider = (props: any) => (
@@ -18,6 +19,29 @@ const CustomSlider = (props: any) => (
   />
 )
 
+const ColorPlanRender = (text: string, background: string) => (
+  <div
+    style={{
+      color: text,
+      backgroundColor: background
+    }}
+    className="flex-box s-m-color-plan common-active" /** s-m-color-plan-current */
+  >
+    A
+  </div>
+)
+
+const colorPlan = [
+  ['#000000', '#ffffff'],
+  ['#393939', '#efebdf'],
+  ['#393939', '#e7d7bd'],
+  ['#393939', '#deebcf'],
+  ['#282828', '#a4a6a3'],
+  ['#9c9a9d', '#000000'],
+  ['#adadb5', '#29354b'],
+  ['#324553', '#080b10'],
+]
+
 interface Props {
   fonts: Array<string>
 }
@@ -25,7 +49,7 @@ interface Props {
 export default function Reader ({
   fonts,
 }: Props): JSX.Element {
-  
+
   return (
     <div className="reader-wrapper">
       <div className="flex-box reader-toolbar">
@@ -92,7 +116,7 @@ export default function Reader ({
               ({ index, style }) => {
                 const font = fonts[index]
                 return (
-                  <p style={Object.assign({ fontFamily: font }, style)} className="common-ellipsis s-m-font-item">
+                  <p style={Object.assign({ fontFamily: font }, style)} className="common-ellipsis common-active s-m-font-item">
                     { font }
                   </p>
                 )
@@ -102,7 +126,40 @@ export default function Reader ({
         </div>
         {/* 配色方案 */}
         <div className="flex-box s-m-color">
-          
+          <div className="flex-box s-m-row" style={{ padding: '0' }}>
+            <p className="s-m-title">基础方案</p>
+            <div
+              className="flex-box"
+              style={{
+                justifyContent: 'space-between',
+                width: '500px',
+              }}
+            >
+              {
+                colorPlan.map((plan) => ColorPlanRender(plan[0], plan[1]))
+              }
+            </div>
+            <div
+              className="flex-box"
+              style={{
+                justifyContent: 'space-between',
+                width: '100%',
+                marginTop: '30px',
+              }}
+            >
+              <div className="s-m-color-picker">
+                <p className="s-m-title">文本颜色</p>
+                <HexColorPicker/>
+              </div>
+              <div className="s-m-color-picker" style={{ marginRight: 'unset' }}>
+                <p className="s-m-title">背景颜色</p>
+                <HexColorPicker/>
+              </div>
+              <div className="flex-box" style={{ width: '100px' }}>
+                { ColorPlanRender("#000000", "#ffffff") }
+              </div>
+            </div>
+          </div>
         </div>
         {/* 全文检索 */}
       </div>

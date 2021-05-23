@@ -5012,6 +5012,11 @@ raw-body@2.4.0:
     iconv-lite "0.4.24"
     unpipe "1.0.0"
 
+react-colorful@^5.2.0:
+  version "5.2.0"
+  resolved "https://registry.nlark.com/react-colorful/download/react-colorful-5.2.0.tgz#1cd24ca7deff73a70cf34261813a4ed6c45129c2"
+  integrity sha1-HNJMp97/c6cM80JhgTpO1sRRKcI=
+
 react-dom@^16.13.1:
   version "16.14.0"
   resolved "https://registry.nlark.com/react-dom/download/react-dom-16.14.0.tgz?cache=0&sync_timestamp=1621527433345&other_urls=https%3A%2F%2Fregistry.nlark.com%2Freact-dom%2Fdownload%2Freact-dom-16.14.0.tgz#7ad838ec29a777fb3c75c3a190f661cf92ab8b89"

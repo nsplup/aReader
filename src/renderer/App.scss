@@ -252,7 +252,7 @@ body, html, #root {
   margin: 0 auto;
   padding: 10px;
   border-radius: 10px;
-  background-color: #fef2ff;
+  background-color: $primary-color-pale;
   box-shadow: 0 0 10px 0 rgba(55, 55, 55, .2);
   box-sizing: border-box;
 }
@@ -293,18 +293,53 @@ body, html, #root {
   }
   &-color {
     flex-direction: column;
+    &-plan {
+      width: 50px;
+      height: 50px;
+
+      border-radius: 50%;
+
+      font-size: 35px;
+      font-weight: bold;
+      &-current::after {
+        display: block;
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: $primary-color;
+        transform: translate3d(0, 35px, 0);
+        content: "";
+      }
+    }
+    &-picker {
+      margin-right: 20px;
+
+      & .react-colorful {
+        width: 180px;
+        height: 100px;
+      }
+      & .react-colorful__pointer {
+        width: 20px;
+        height: 20px;
+      }
+      & .react-colorful__hue {
+        height: 20px;
+      }
+    }
   }
 }
 
 .com {
   &-slider {
+    $color: #ae08b5;
     width: 200px;
     &-track {
       height: 6px;
       border-radius: 5px;
       cursor: pointer;
       &-0 {
-        background-color: $primary-color;
+        background-color: $color;
       }
       &-1 {
         background-color: rgba(50, 50, 50, .1);
@@ -314,7 +349,7 @@ body, html, #root {
       width: 12px;
       height: 12px;
   
-      border: 2px solid $primary-color;
+      border: 2px solid $color;
       border-radius: 12px;
       outline: none;
       background-color: #ffffff;
