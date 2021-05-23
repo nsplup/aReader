@@ -125,7 +125,7 @@ export default function Reader ({
           </FixedSizeList>
         </div>
         {/* 配色方案 */}
-        <div className="flex-box s-m-color">
+        <div style={{ display: 'none' }} className="flex-box s-m-color">
           <div className="flex-box s-m-row" style={{ padding: '0' }}>
             <p className="s-m-title">基础方案</p>
             <div
@@ -162,6 +162,15 @@ export default function Reader ({
           </div>
         </div>
         {/* 全文检索 */}
+        <div className="flex-box s-m-search">
+          <p className="s-m-title">全文检索</p>
+          <div style={{ position: 'relative' }}>
+            <button className="flex-box s-m-search-btn">
+              <i className="ri-search-line"></i>
+            </button>
+            <input type="text" className="s-m-input" spellCheck="false"/>
+          </div>
+        </div>
       </div>
     </div>
   )

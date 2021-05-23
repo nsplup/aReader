@@ -328,6 +328,46 @@ body, html, #root {
       }
     }
   }
+  &-search {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    height: 300px;
+    
+    &-btn {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 50px;
+      height: 35.5px;
+      outline: none;
+      padding-left: 10px;
+      border: none;
+      border-radius: 5px;
+      color: #ffffff;
+      font-weight: bold;
+      background: $primary-color;
+      transform: translate3d(calc(100% - 10px), 0, 0);
+      transition: transform .2s ease-out;
+
+      & [class^="ri-"] {
+        margin-right: unset;
+      }
+      &:active {
+        transform: translate3d(calc(100% - 10px), 0, 0) scale(.9);
+      }
+    }
+  }
+  &-input {
+    width: 260px;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    outline: none;
+    color: $common-text-main;
+    background-color: rgb(224 224 224);
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 .com {
