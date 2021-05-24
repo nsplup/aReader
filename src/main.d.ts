@@ -12,20 +12,18 @@ interface Infomation {
   format: 'EPUB' | 'TEXT'
   /** 导入时间 */
   createdTime: number
-  /** 书籍路径 */
-  cover: string | false
-  /** to-do: T类型声明; 书籍内容 */
-  menifest: Array<any>
-  /** to-do: T类型声明; 书籍排版顺序 */
-  spine: Array<any>
-  /** to-do: T类型声明; 书籍目录 */
-  nav: Array<any>
-  /** to-do: T类型声明; 书籍目录映射表 */
-  navMap: any
+  /** 封面路径 */
+  cover: string | null
+  /** 书籍内容 */
+  manifest: Array<Manifest>
+  /** 书籍排版顺序 */
+  spine: Array<string>
+  /** 书籍目录 */
+  nav: Array<Nav>
   /** 书签 */
   bookmark: Bookmark
   /** Text 格式编码类型 */
-  encode?: string
+  encode: string
 }
 
 interface Category {
@@ -35,7 +33,7 @@ interface Category {
 
 interface Bookmark {
   default: Array<number>
-  detail: Array<number>
+  detail: number[][]
 }
 
 interface UserConfig {
@@ -63,4 +61,16 @@ interface ColorPlan {
   current: number
   /** 自定义配色方案；[文本颜色, 背景颜色] */
   custom: Array<string>
+}
+
+interface Manifest {
+  id: string
+  href: string
+}
+
+interface Nav {
+  id: string
+  navLabel: string
+  href: string
+  isSub: boolean
 }

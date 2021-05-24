@@ -3,7 +3,16 @@ import React, { useState, useEffect } from 'react'
 export default function Placeholder (props: any): JSX.Element {
 
   return (
-    <div className="book-wrapper" { ...props }>
+    <div
+      style={{
+        float: 'left',
+        position: 'relative',
+        width: '150px',
+        height: '250px',
+        marginRight: '20px',
+      }}
+      { ...props }
+    >
       <svg
         width="150"
         height="250"

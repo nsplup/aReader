@@ -30,6 +30,16 @@ workerpool
 Apache 2.0
 Copyright 2014-2020 Jos de Jong wjosdejong@gmail.com
 https://github.com/josdejong/workerpool
+
+node-7z
+ISC License
+Copyright 2014-2019, Quentin Rossetti quentin.rossetti@gmail.com
+https://github.com/quentinrossetti/node-7z
+
+7zip
+GNU LGPL
+Copyright (C) 1999-2015 Igor Pavlov.
+https://github.com/fritx/win-7zip
 ```
 <p align="center">💕以及未在此列的MIT开源项目💕</p>
 
