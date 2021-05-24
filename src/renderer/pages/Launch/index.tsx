@@ -9,6 +9,7 @@ import {
 
 import Book from './Book'
 import Reader from '../Reader'
+import Placeholder from './Placeholder'
 import { generateFonts } from '@renderer/actions'
 import { WINDOW_READY } from '@constants'
 import { classNames } from '@utils/classNames'
@@ -75,6 +76,7 @@ function Launch ({
         <section className="launch-library">
           <header className="launch-title">最近阅读</header>
           <div className="launch-history fix">
+            <Placeholder/>
             {
               [...new Array(10).keys()].map(() => (
                 <Book cover={ false } title="异世界转生，地雷！异世界转生，地雷！" format="EPUB" progress={ 50 } />

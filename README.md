@@ -11,7 +11,6 @@
 
 
 # License
-
 ```
 镜览
 Apache 2.0
@@ -32,4 +31,5 @@ Apache 2.0
 Copyright 2014-2020 Jos de Jong wjosdejong@gmail.com
 https://github.com/josdejong/workerpool
 ```
+<p align="center">💕以及未在此列的MIT开源项目💕</p>
 

@@ -460,4 +460,53 @@ body, html, #root {
     margin: 0;
     font-size: 13px;
   }
+  &-p-animation {
+    $color: rgba(165, 165, 165, .1);
+    @keyframes slide {
+      0% {
+        transform: translate3d(-20px, 0, 0);
+      }
+      100% {
+        transform: translate3d(170px, 0, 0);
+      }
+    }
+
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 5px;
+    height: 100%;
+    background-color: $color;
+    box-shadow: 0 0 10px 10px $color;
+    animation: slide 1.5s cubic-bezier(.77, 0, .18, 1) infinite;
+  }
+  &-p-a {
+    &-1, &-2, &-3 {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      overflow: hidden;
+    }
+    &-1 {
+      top: 0;
+      height: 200px;
+    }
+    &-2 {
+      top: 207.5px;
+      height: 15px;
+    }
+    &-3 {
+      top: 230px;
+      height: 15px;
+    }
+  }
+  &-p-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50px;
+    height: 15px;
+    background-color: #ffffff;
+    transform: translate3d(0, 0, 0)
+  }
 }
