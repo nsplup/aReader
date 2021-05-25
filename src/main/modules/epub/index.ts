@@ -43,7 +43,7 @@ function loadEPUB (filePath: string, res: Function, rej: Function) {
             path.resolve(bookPath, '.infomation'),
             { encoding: 'utf8' },
             (err, data) => {
-              res(JSON.parse(data))
+              res([hash, JSON.parse(data)])
             }
           )
         } else {
@@ -154,7 +154,7 @@ function loadEPUB (filePath: string, res: Function, rej: Function) {
 
                       infomation.nav = nav
 
-                      res(infomation)
+                      res([hash, infomation])
 
                       /** 保存缓存文件 */
                       fs.writeFile(
