@@ -30,6 +30,7 @@ function _chunk (chunks: string[], maxSize: number) {
   return results
 }
 
+
 function loadTEXT (filePath: string, res: Function, rej: Function) {
     /** 计算 SHA256 */
     _7z.hash(path.resolve(filePath), { hashMethod: 'sha256', $bin: _7zbin })
@@ -63,7 +64,7 @@ function loadTEXT (filePath: string, res: Function, rej: Function) {
               .split(/[\r\n]/)
             const regExp = /^(卷\s*[0123456789一二三四五六七八九十零〇百千两壹貳叁肆伍陸柒捌玖拾佰仟]+.*|第\s*[0123456789一二三四五六七八九十零〇百千两壹貳叁肆伍陸柒捌玖拾佰仟]+\s*[章回卷节集部]+.*|[0123456789]+\s*.+)$/
             const chunks = []
-            let chunk: string[] | string[][] = []
+            let chunk: any = []
             const navLabelMark = '#**镜览**#' /** 目录标记 */
   
             /** 生成目录并按照目录分块；去除文字两边空格及空白行 */
@@ -76,7 +77,7 @@ function loadTEXT (filePath: string, res: Function, rej: Function) {
                     chunk = [navLabelMark]
                   }
                 }
-                (chunk as string[]).push(line)
+                chunk.push(line)
               }
             }
   
@@ -86,6 +87,7 @@ function loadTEXT (filePath: string, res: Function, rej: Function) {
             const manifest = []
             const spine = []
             const nav = []
+            const content: any = {}
             
             for (let i = 0, len = chunks.length; i < len; i++) {
               let id = 'text-chunk-' + i
@@ -96,19 +98,17 @@ function loadTEXT (filePath: string, res: Function, rej: Function) {
   
               /** 获取目录标题并清除目录标记 */
               if (chunk[0] === navLabelMark) {
-                navLabel = (chunk[1] as string)
+                navLabel = chunk[1]
                 chunk = chunk.slice(1)
               }
 
               /** 对超过限定大小的分块进行再分块 */
-              chunk = _chunk(chunk as string[], chunkSize)
+              chunk = _chunk(chunk, chunkSize)
               for (let j = 0, len = chunk.length; j < len; j++) {
                 let _id = `${id}-${j}`
                 let filename = '.' + _id
-                fs.writeFileSync(
-                  path.resolve(bookPath, filename),
-                  chunk[j].join('\n')
-                )
+                content[filename] = chunk[j].join('\n')
+
                 manifest.push({
                   id: _id,
                   href: filename
@@ -124,7 +124,7 @@ function loadTEXT (filePath: string, res: Function, rej: Function) {
                 }
               }
             }
-  
+
             Object.assign(infomation, {
               title: path.basename(filePath).split('.')[0],
               manifest,
@@ -132,14 +132,25 @@ function loadTEXT (filePath: string, res: Function, rej: Function) {
               spine,
               nav,
             })
-  
-            res(infomation)
-  
-            /** 保存缓存文件 */
+
             fs.writeFile(
-              path.resolve(bookPath, '.infomation'),
-              JSON.stringify(infomation),
-              (err) => { if (err) { rej('.infomation 文件保存失败') } }
+              path.resolve(bookPath, '.content'),
+              JSON.stringify(content),
+              (err) => {
+                if (err) {
+                  rej('.content 文件保存失败')
+                  return
+                }
+
+                res(infomation)
+
+                /** 保存缓存文件 */
+                fs.writeFile(
+                  path.resolve(bookPath, '.infomation'),
+                  JSON.stringify(infomation),
+                  (err) => { if (err) { rej('.infomation 文件保存失败') } }
+                )
+              }
             )
           } catch (e) {
             rej(e)
