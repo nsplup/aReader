@@ -127,6 +127,8 @@ function loadTEXT (filePath: string, res: Function, rej: Function) {
 
             Object.assign(infomation, {
               title: path.basename(filePath).split('.')[0],
+              format: 'TEXT',
+              createdTime: Date.now(),
               manifest,
               cover: null,
               spine,
