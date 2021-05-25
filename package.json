@@ -40,6 +40,8 @@
     "7zip": "^0.0.6",
     "fast-xml-parser": "^3.19.0",
     "font-list": "^1.2.14",
+    "iconv-lite": "^0.6.3",
+    "jschardet": "^3.0.0",
     "node-7z": "^2.1.2",
     "react": "^16.13.1",
     "react-colorful": "^5.2.0",

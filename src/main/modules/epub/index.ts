@@ -1,12 +1,11 @@
 import _7z from 'node-7z'
-import fxp from 'fast-xml-parser'
 const _7zbin = require('7zip')['7z']
-
-import fs from 'fs'
+import fxp from 'fast-xml-parser'
 import path from 'path'
-
+import fs from 'fs'
 import { findFile } from '@utils/findFile'
 import { getFileMimeType } from '@utils/getFileMimeType'
+
 
 // const defaultInfo = {
 //   title: '',
@@ -20,15 +19,7 @@ import { getFileMimeType } from '@utils/getFileMimeType'
 //     default: [],
 //     detail: []
 //   },
-//   encode: null
 // }
-interface CInfomation {
-  title: string
-  cover: string | null
-  manifest: Array<Manifest>
-  spine: Array<string>
-  nav: Array<Nav>
-}
 
 function loadEPUB (filePath: string, res: Function, rej: Function) {
   /** 计算 SHA256 */
@@ -36,13 +27,7 @@ function loadEPUB (filePath: string, res: Function, rej: Function) {
     .on('data', (data) => {
       const { hash } = data
       const bookPath = path.resolve(__dirname, hash)
-      const infomation: CInfomation = {
-        title: '',
-        cover: null,
-        manifest: [],
-        spine: [],
-        nav: []
-      }
+      const infomation: any = {}
 
       fs.readdir(bookPath, (err, files) => {
         /** 是否存在书籍缓存 */
@@ -99,7 +84,12 @@ function loadEPUB (filePath: string, res: Function, rej: Function) {
                     ? metadata['dc:title']
                     : filename
                   /** 获取manifest */
-                  infomation.manifest = manifest.item
+                  if (manifest && manifest.item) {
+                    infomation.manifest = manifest.item
+                  } else {
+                    rej('读取失败：不是合法的content.opf文件')
+                    return
+                  }
 
                   /** 获取封面 */
                   if (typeof cover === 'object') {
@@ -107,7 +97,7 @@ function loadEPUB (filePath: string, res: Function, rej: Function) {
                     const regExp = /\..+$/
                     /** 是否为路径 */
                     if (!regExp.test(coverPath)) {
-                      coverPath = infomation.manifest.filter(({ id }) => id === coverPath)[0]
+                      coverPath = infomation.manifest.filter(({ id }: any) => id === coverPath)[0]
                       if (typeof coverPath === 'object' && coverPath.href) {
                         coverPath = coverPath.href
                       }
@@ -124,7 +114,13 @@ function loadEPUB (filePath: string, res: Function, rej: Function) {
                     }
                   }
 
-                  infomation.spine = spine.itemref.map(({ idref }: { idref: string }) => idref)
+                  /** 获取spine */
+                  if (spine && spine.itemref) {
+                    infomation.spine = spine.itemref.map(({ idref }: any) => idref)
+                  } else {
+                    /** 从manifest生成spine */
+                    infomation.spine = infomation.manifest.map(({ id }: any) => id)
+                  }
 
                   /** 获取目录 */
                   fs.readFile(
@@ -136,7 +132,7 @@ function loadEPUB (filePath: string, res: Function, rej: Function) {
                       }
                       /** 目录转化 */
                       const formatNav = (navPoints: any, isSub = false) => {
-                        let results: any[] = [];
+                        let results: Nav[] = [];
 
                         [].concat(navPoints).forEach(({
                           id, navLabel, content, navPoint

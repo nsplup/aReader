@@ -22,8 +22,6 @@ interface Infomation {
   nav: Array<Nav>
   /** 书签 */
   bookmark: Bookmark
-  /** Text 格式编码类型 */
-  encode: string
 }
 
 interface Category {

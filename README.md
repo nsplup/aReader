@@ -40,6 +40,12 @@ https://github.com/quentinrossetti/node-7z
 GNU LGPL
 Copyright (C) 1999-2015 Igor Pavlov.
 https://github.com/fritx/win-7zip
+
+jschardet
+LGPL-2.1+
+https://github.com/aadsm/jschardet
+
+
 ```
 <p align="center">💕以及未在此列的MIT开源项目💕</p>
 
