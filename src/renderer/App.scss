@@ -510,3 +510,94 @@ body, html, #root {
     transform: translate3d(0, 0, 0)
   }
 }
+// Toast 组件部分
+.c-toast {
+  &-wrapper {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 50px;
+    z-index: 9999;
+    width: 450px;
+    margin: auto;
+
+    transform: scaleY(0);
+    visibility: hidden;
+    transition: transform .2s ease-out;
+  }
+  &-main {
+    position: absolute;
+    z-index: 999;
+    user-select: none;
+    width: 100%;
+    overflow: hidden;
+    padding: 20px;
+    border-radius: 10px;
+    color: #2b2b2b;
+    font-size: 15px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    background-color: #f7f7f7;
+    box-sizing: border-box;
+    box-shadow: 0 0 10px 0 rgba(50, 50, 50, .3);
+  }
+  &-detail {
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    height: 0;
+    padding: 20px;
+    padding-top: 60px;
+    border-radius: 10px;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    color: #b7a1ff;
+    background: #2e003e;
+    transition: height .3s ease-out;
+    box-sizing: border-box;
+
+    & div {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+
+  }
+  &-btn {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 10px;
+    height: 40px;
+    margin: auto 0;
+    padding: 5px 15px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    color: #afafaf;
+    background: none;
+    box-sizing: border-box;
+    &:hover {
+      background-color: rgba(50, 50, 50, .1);
+    }
+  }
+}
+.c-t {
+  &-has-detail {
+    & .c-toast-main {
+      padding-right: 76.66px;
+    }
+  }
+  &-is-active {
+    transform: scaleY(1);
+    visibility: visible;
+  }
+  &-view-more {
+    & .c-toast-detail {
+      height: 160px;
+    }
+  }
+}
+// Toast 组件部分完

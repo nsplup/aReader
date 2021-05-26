@@ -10,6 +10,7 @@ import {
 import Book from './Book'
 import Reader from '../Reader'
 import Placeholder from './Placeholder'
+import Toast from './Toast'
 import { generateFonts } from '@renderer/actions'
 import { WINDOW_READY } from '@constants'
 import { classNames } from '@utils/classNames'
@@ -35,12 +36,15 @@ function Launch ({
   const [isCMenuActive, setIsCMenuActive] = useState(false)
   const cMenu = useRef<HTMLDivElement>()
 
+  /** Toast组件变量 */
+  const [message, setMessage] = useState(['', ''])
+  
   useEffect(() => {
     /** 主进程通信事件 */
     const listener = (event: Electron.IpcRendererEvent, fonts: Array<string>) => {
       generateFonts(fonts)
     }
-    ipcRenderer.once(FONTS_READY, listener)
+    ipcRenderer.on(FONTS_READY, listener)
     ipcRenderer.send(WINDOW_READY)
 
     /** 右键菜单事件 */
@@ -60,8 +64,10 @@ function Launch ({
 
     document.body.addEventListener('contextmenu', handleContextmenu)
 
+    setMessage(['测试'.repeat(100), '测试'.repeat(100)])
+
     return () => {
-      // ipcRenderer.off(FONTS_READY, listener)
+      ipcRenderer.off(FONTS_READY, listener)
       document.body.removeEventListener('contextmenu', handleContextmenu)
     }
   }, [])
@@ -135,6 +141,7 @@ function Launch ({
           <p className="com-c-title">删除书籍</p>
         </div>
       </div>
+      <Toast msg={ message[0] } detail={ message[1] } />
     </>
   )
 }

@@ -25,7 +25,7 @@ function init () {
   })
   
   /** 获取字体列表 */
-  ipcMain.once(WINDOW_READY, (event: Electron.IpcMainEvent) => {
+  ipcMain.on(WINDOW_READY, (event: Electron.IpcMainEvent) => {
     getFonts({ disableQuoting: true })
       .then(fonts => {
         event.reply(FONTS_READY, fonts)
