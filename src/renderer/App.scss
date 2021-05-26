@@ -261,6 +261,7 @@ body, html, #root {
 }
 
 .secondary-menu {
+  visibility: hidden;
   position: absolute;
   bottom: 70px;
   left: 0;
@@ -272,10 +273,18 @@ body, html, #root {
   padding: 10px;
   border-radius: 10px;
   background-color: $primary-color-pale;
+  transition: transform .2s ease-out, opacity .2s ease-out;
+  transform: translate3d(0, 20px, 0);
+  opacity: 0;
   box-shadow: 0 0 10px 0 rgba(55, 55, 55, .2);
   box-sizing: border-box;
 }
 .s-m {
+  &-active {
+    visibility: visible;
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
   &-row {
     flex-direction: column;
     padding: 10px 10px 15px 10px;
@@ -432,6 +441,8 @@ body, html, #root {
     flex-direction: column;
     visibility: hidden;
     position: absolute;
+    top: 0;
+    left: 0;
     z-index: 1001;
     user-select: none;
     padding: 10px;

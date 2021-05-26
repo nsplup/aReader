@@ -38,7 +38,29 @@ function Launch ({
 
   /** Toast组件变量 */
   const [message, setMessage] = useState(['', ''])
+
+  /** Reader组件变量 */
+  const [isReaderActive, setIsReaderActive] = useState(false)
   
+  /** 激活阅读窗口事件 */
+  const handleEnableReader = (e: MouseEvent) => {
+    const { path } = e as any
+
+    if ([...path].some((el: Element) => el.className && el.className.includes('book-wrapper'))) {
+      setIsReaderActive(true)
+    }
+  }
+
+  const handleCloseCMenu = () => {
+    const { current: cMenuEl } = cMenu
+    setIsCMenuActive(false)
+        
+    cMenuEl.style.cssText = toCSSText({
+      left: 0,
+      top: 0,
+    })
+  }
+
   useEffect(() => {
     /** 主进程通信事件 */
     const listener = (event: Electron.IpcRendererEvent, fonts: Array<string>) => {
@@ -49,7 +71,7 @@ function Launch ({
 
     /** 右键菜单事件 */
     const handleContextmenu = (e: MouseEvent) => {
-      const { path, pageX, pageY, target } = e as any
+      const { path, pageX, pageY } = e as any
 
       if ([...path].some((el: Element) => el.className && el.className.includes('book-wrapper'))) {
         setIsCMenuActive(true)
@@ -63,18 +85,24 @@ function Launch ({
     }
 
     document.body.addEventListener('contextmenu', handleContextmenu)
-
-    setMessage(['测试'.repeat(100), '测试'.repeat(100)])
+    document.body.addEventListener('click', handleEnableReader)
 
     return () => {
       ipcRenderer.off(FONTS_READY, listener)
       document.body.removeEventListener('contextmenu', handleContextmenu)
+      document.body.removeEventListener('click', handleEnableReader)
     }
   }, [])
 
   return (
     <>
-      <div className="flex-box launch-wrapper" style={{ userSelect: "none" }}>
+      <div
+        className="flex-box launch-wrapper"
+        style={{
+          display: isReaderActive ? 'none' : 'block',
+          userSelect: "none"
+        }}
+      >
         <button className="flex-box common-button common-active" onClick={ handleOpenDialog }>
           <i className="ri-file-add-line"></i>
           导入书籍
@@ -115,13 +143,14 @@ function Launch ({
           </div>
         </div>
       </div>
-      <Reader fonts={ fonts }/>
+      <Reader fonts={ fonts } isReaderActive={ isReaderActive } />
       <div
         className="common-mask"
         style={{
+          position: isCMenuActive ? 'fixed' : 'absolute',
           visibility: isCMenuActive ? 'visible' : 'hidden'
         }}
-        onClick={() => setIsCMenuActive(false)}
+        onClick={handleCloseCMenu}
       ></div>
       <div
         ref={ cMenu }

@@ -6,7 +6,7 @@ import path from 'path'
 import fs from 'fs'
 
 const chunkSize = 1024 * 103 /** 最大分块大小 */
-
+const dirName = path.resolve('.', 'data')
 
 /** 分块函数 */
 function _chunk (chunks: string[], maxSize: number) {
@@ -36,7 +36,7 @@ function loadTEXT (filePath: string, res: Function, rej: Function) {
     _7z.hash(path.resolve(filePath), { hashMethod: 'sha256', $bin: _7zbin })
     .on('data', (data) => {
       const { hash } = data
-      const bookPath = path.resolve(__dirname, hash)
+      const bookPath = path.resolve(dirName, hash)
       const infomation = {}
 
       fs.readdir(bookPath, (err, files) => {
