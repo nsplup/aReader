@@ -1,4 +1,8 @@
-import { GENERATE_FONTS } from '../constants'
+import {
+  GENERATE_FONTS,
+  UPDATA_LIBRARY,
+  UPDATA_USERCONFIG,
+} from '../constants'
 
 interface State {
   fonts: Array<string>
@@ -20,6 +24,12 @@ const initialState: State = {
 export default function rootReducer (state = initialState, action: Action): State {
   const actionMap: ActionMap = {
     [GENERATE_FONTS] () {
+      return Object.assign({}, state, action.payload)
+    },
+    [UPDATA_LIBRARY] () {
+      return Object.assign({}, state, action.payload)
+    },
+    [UPDATA_USERCONFIG] () {
       return Object.assign({}, state, action.payload)
     },
   }

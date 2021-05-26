@@ -4,6 +4,8 @@ import { HexColorPicker } from 'react-colorful'
 import Slider from 'react-slider'
 import { classNames } from '@utils/classNames'
 
+const searchPlaceholder = require('@static/illustration/undraw_Web_search_re_efla.svg').default
+
 const CustomSlider = (props: any) => (
   <Slider
     { ...props }
@@ -20,14 +22,20 @@ const CustomSlider = (props: any) => (
   />
 )
 
-const ColorPlanRender = (text: string, background: string, index: number) => (
+const ColorPlanRender = (text: string, background: string, index: number, current: number) => (
   <div
     style={{
       color: text,
       backgroundColor: background
     }}
-    className="flex-box s-m-color-plan common-active" /** s-m-color-plan-current */
+    className={
+      classNames(
+        'flex-box s-m-color-plan common-active',
+        { 's-m-color-plan-current': index === current }
+      )
+    }
     data-plan={ index }
+    key={ index }
   >
     A
   </div>
@@ -48,14 +56,24 @@ interface Props {
   fonts: Array<string>
   isReaderActive: boolean
   handleClose: Function
+  userconfig: UserConfig
 }
 
 export default function Reader ({
   fonts,
   isReaderActive,
   handleClose,
+  userconfig,
 }: Props): JSX.Element {
   /** 样式属性 */
+  const [renderMode, setRenderMode] = useState('page')
+
+  const [fontFamily, setFontFamily] = useState('微软雅黑')
+  const [fontSize, setFontSize] = useState(18)
+  const [textIndent, setTextIndent] = useState(0)
+  const [lineHeight, setLineHeight] = useState(50)
+
+  const [cColorPlan, setCColorPlan] = useState(0)
   const [textColor, setTextColor] = useState('#b7a1ff')
   const [backgroundColor, setBackgroundColor] = useState('#2e003e')
   /** 状态属性 */
@@ -63,14 +81,19 @@ export default function Reader ({
   const handleCloseSMenu = () => {
     setSMenuStatus(null)
   }
-  const [fontSize, setFontSize] = useState(18)
-  const [textIndent, setTextIndent] = useState(0)
-  const [lineHeight, setLineHeight] = useState(50)
 
   const handleCloseReader = () => {
     handleClose(false)
     /** to-do: 取消全屏 */
   }
+
+  /** 打开字体样式窗口事件 */
+  const fontList = useRef(null)
+  const handleOpenFontStyle = () => {
+    setSMenuStatus('font')
+    fontList.current.scrollToItem(fonts.indexOf(fontFamily))
+  }
+
   return (
     <div
       className={
@@ -102,7 +125,7 @@ export default function Reader ({
           <i className="reader-tool common-active ri-list-unordered">
             <span className="reader-tool-tips">目录</span>
           </i>
-          <i className="reader-tool common-active ri-text" onClick={() => setSMenuStatus('font')}>
+          <i className="reader-tool common-active ri-text" onClick={ handleOpenFontStyle }>
             <span className="reader-tool-tips">字体样式</span>
           </i>
           <i className="reader-tool common-active ri-palette-fill" onClick={() => setSMenuStatus('color')}>
@@ -164,12 +187,22 @@ export default function Reader ({
             height={ 170 }
             itemCount={ fonts.length }
             itemSize={ 50 }
+            ref={ fontList }
           >
             {
               ({ index, style }) => {
                 const font = fonts[index]
                 return (
-                  <p style={Object.assign({ fontFamily: font }, style)} className="common-ellipsis common-active s-m-font-item">
+                  <p
+                    style={ Object.assign({ fontFamily: font }, style) }
+                    key={ index }
+                    className={
+                      classNames(
+                        'common-ellipsis common-active s-m-font-item',
+                        { 's-m-font-item-active': font === fontFamily}
+                      )
+                    }
+                  >
                     { font }
                   </p>
                 )
@@ -194,7 +227,7 @@ export default function Reader ({
               }}
             >
               {
-                colorPlan.map((plan, index) => ColorPlanRender(plan[0], plan[1], index))
+                colorPlan.map((plan, index) => ColorPlanRender(plan[0], plan[1], index, cColorPlan))
               }
             </div>
             <div
@@ -222,7 +255,7 @@ export default function Reader ({
                   height: '130px',
                 }}
               >
-                { ColorPlanRender(textColor, backgroundColor, -1) }
+                { ColorPlanRender(textColor, backgroundColor, -1, cColorPlan) }
                 <p className="s-m-title">自定义方案</p>
               </div>
             </div>
@@ -236,6 +269,18 @@ export default function Reader ({
           className="flex-box s-m-search"
         >
           <p className="s-m-title">全文检索</p>
+          <img
+            src={ searchPlaceholder }
+            draggable="false"
+            width="200px"
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: '25px',
+              margin: 'auto',
+            }}
+          />
           <div style={{ position: 'relative' }}>
             <button className="flex-box s-m-search-btn">
               <i className="ri-search-line"></i>

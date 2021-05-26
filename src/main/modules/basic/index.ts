@@ -4,12 +4,11 @@ import {
   OPEN_DIALOG,
   WINDOW_READY,
   FONTS_READY,
+  LOAD_LIBRARY,
+  LOAD_USERCONFIG,
 } from '@constants'
 import path from 'path'
 import fs from 'fs'
-
-// const workpool = require('workerpool')
-// const pool = workpool.pool()
 
 function init () {
   /** 在目录生成data文件夹 */
@@ -32,6 +31,52 @@ function init () {
     getFonts({ disableQuoting: true })
       .then(fonts => {
         event.reply(FONTS_READY, fonts)
+        /** 读取.library如果不存在则创建 */
+        fs.readFile('./data/.library', { encoding: 'utf-8' }, (err, data) => {
+          let library: Library
+          if (err) {
+            library = {
+              history: [],
+              categories: [
+                {
+                  name: '默认',
+                  books: [],
+                }
+              ]
+            }
+            fs.writeFile('./data/.library', JSON.stringify(library), (err) => {
+              if (err) { console.log(err) }
+            })
+          } else {
+            library = JSON.parse(data)
+          }
+          event.reply(LOAD_LIBRARY, library)
+        })
+        /** 读取.userconfig如果不存在则创建 */
+        fs.readFile('./data/.userconfig', { encoding: 'utf-8' }, (err, data) => {
+          let userconfig: UserConfig
+          if (err) {
+            userconfig = {
+              renderMode: 'page',
+              fontStyle: {
+                fontFamily: '微软雅黑',
+                fontSize: 18,
+                textIndent: 0,
+                lineHeight: 50,
+              },
+              colorPlan: {
+                current: 0,
+                custom: ['#b7a1ff', '#2e003e']
+              }
+            }
+            fs.writeFile('./data/.userconfig', JSON.stringify(userconfig), (err) => {
+              if (err) { console.log(err) }
+            })
+          } else {
+            userconfig = JSON.parse(data)
+          }
+          event.reply(LOAD_USERCONFIG, userconfig)
+        })
       })
   })
 }

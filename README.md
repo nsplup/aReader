@@ -54,11 +54,6 @@ Apache 2.0
 Copyright 2020 Remix Design
 http://remixicon.com/
 
-workerpool
-Apache 2.0
-Copyright 2014-2020 Jos de Jong wjosdejong@gmail.com
-https://github.com/josdejong/workerpool
-
 node-7z
 ISC License
 Copyright 2014-2019, Quentin Rossetti quentin.rossetti@gmail.com

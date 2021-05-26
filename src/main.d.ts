@@ -47,11 +47,11 @@ interface FontStyle {
   /** 字体系列 */
   fontFamily: string
   /** 字体大小 */
-  fontSize: string
+  fontSize: number
   /** 首行缩进 */
-  textIndent: string
+  textIndent: number
   /** 行高 */
-  lineHeight: string
+  lineHeight: number
 }
 
 interface ColorPlan {

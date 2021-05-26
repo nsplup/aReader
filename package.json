@@ -20,7 +20,7 @@
     "babel-loader": "^8.1.0",
     "clean-webpack-plugin": "^3.0.0",
     "css-loader": "^3.5.3",
-    "electron": "^12.0.9",
+    "electron": "12.0.9",
     "file-loader": "^6.0.0",
     "html-webpack-plugin": "^4.3.0",
     "postcss-loader": "^3.0.0",
@@ -51,7 +51,6 @@
     "react-slider": "^1.1.4",
     "react-window": "^1.8.6",
     "redux": "^4.0.5",
-    "redux-saga": "^1.1.3",
-    "workerpool": "^6.1.4"
+    "redux-saga": "^1.1.3"
   }
 }

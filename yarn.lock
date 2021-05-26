@@ -1046,9 +1046,9 @@
   integrity sha1-I6Brh+7bUkAWYW6IaxFrj9yxgK8=
 
 "@types/node@^14.6.2":
-  version "14.17.0"
-  resolved "https://registry.nlark.com/@types/node/download/@types/node-14.17.0.tgz?cache=0&sync_timestamp=1621463636059&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40types%2Fnode%2Fdownload%2F%40types%2Fnode-14.17.0.tgz#3ba770047723b3eeb8dc9fca02cce8a7fb6378da"
-  integrity sha1-O6dwBHcjs+643J/KAszop/tjeNo=
+  version "14.17.1"
+  resolved "https://registry.nlark.com/@types/node/download/@types/node-14.17.1.tgz#5e07e0cb2ff793aa7a1b41deae76221e6166049f"
+  integrity sha1-Xgfgyy/3k6p6G0HernYiHmFmBJ8=
 
 "@types/prop-types@*":
   version "15.7.3"
@@ -2180,9 +2180,9 @@ core-js-compat@^3.9.0, core-js-compat@^3.9.1:
     semver "7.0.0"
 
 core-js@^3.6.5:
-  version "3.12.1"
-  resolved "https://registry.nlark.com/core-js/download/core-js-3.12.1.tgz#6b5af4ff55616c08a44d386f1f510917ff204112"
-  integrity sha1-a1r0/1VhbAikTThvH1EJF/8gQRI=
+  version "3.13.0"
+  resolved "https://registry.nlark.com/core-js/download/core-js-3.13.0.tgz#58ca436bf01d6903aee3d364089868d0d89fe58d"
+  integrity sha1-WMpDa/AdaQOu49NkCJho0Nif5Y0=
 
 core-util-is@~1.0.0:
   version "1.0.2"
@@ -2533,7 +2533,7 @@ dot-case@^3.0.4:
 
 duplexer3@^0.1.4:
   version "0.1.4"
-  resolved "https://registry.npm.taobao.org/duplexer3/download/duplexer3-0.1.4.tgz#ee01dd1cac0ed3cbc7fdbea37dc0a8f1ce002ce2"
+  resolved "https://registry.nlark.com/duplexer3/download/duplexer3-0.1.4.tgz#ee01dd1cac0ed3cbc7fdbea37dc0a8f1ce002ce2"
   integrity sha1-7gHdHKwO08vH/b6jfcCo8c4ALOI=
 
 duplexify@^3.4.2, duplexify@^3.6.0:
@@ -2556,9 +2556,9 @@ electron-to-chromium@^1.3.723:
   resolved "https://registry.nlark.com/electron-to-chromium/download/electron-to-chromium-1.3.735.tgz?cache=0&sync_timestamp=1621548807533&other_urls=https%3A%2F%2Fregistry.nlark.com%2Felectron-to-chromium%2Fdownload%2Felectron-to-chromium-1.3.735.tgz#fa1a8660f2790662291cb2136f0e446a444cdfdc"
   integrity sha1-+hqGYPJ5BmIpHLITbw5EakRM39w=
 
-electron@^12.0.9:
+electron@12.0.9:
   version "12.0.9"
-  resolved "https://registry.nlark.com/electron/download/electron-12.0.9.tgz?cache=0&sync_timestamp=1621526959694&other_urls=https%3A%2F%2Fregistry.nlark.com%2Felectron%2Fdownload%2Felectron-12.0.9.tgz#d582afa8f6fc0c429606f0961a4c89b376994823"
+  resolved "https://registry.nlark.com/electron/download/electron-12.0.9.tgz#d582afa8f6fc0c429606f0961a4c89b376994823"
   integrity sha1-1YKvqPb8DEKWBvCWGkyJs3aZSCM=
   dependencies:
     "@electron/get" "^1.0.1"
@@ -4465,9 +4465,9 @@ normalize-range@^0.1.2:
   integrity sha1-LRDAa9/TEuqXd2laTShDlFa3WUI=
 
 normalize-url@^4.1.0:
-  version "4.5.0"
-  resolved "https://registry.npm.taobao.org/normalize-url/download/normalize-url-4.5.0.tgz?cache=0&sync_timestamp=1617786343734&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fnormalize-url%2Fdownload%2Fnormalize-url-4.5.0.tgz#453354087e6ca96957bd8f5baf753f5982142129"
-  integrity sha1-RTNUCH5sqWlXvY9br3U/WYIUISk=
+  version "4.5.1"
+  resolved "https://registry.nlark.com/normalize-url/download/normalize-url-4.5.1.tgz?cache=0&sync_timestamp=1621862147909&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fnormalize-url%2Fdownload%2Fnormalize-url-4.5.1.tgz#0dd90cf1288ee1d1313b87081c9a5932ee48518a"
+  integrity sha1-DdkM8SiO4dExO4cIHJpZMu5IUYo=
 
 npm-conf@^1.1.3:
   version "1.1.3"
@@ -6517,11 +6517,6 @@ worker-farm@^1.7.0:
   integrity sha1-JqlMU5G7ypJhUgAvabhKS/dy5ag=
   dependencies:
     errno "~0.1.7"
-
-workerpool@^6.1.4:
-  version "6.1.4"
-  resolved "https://registry.npm.taobao.org/workerpool/download/workerpool-6.1.4.tgz?cache=0&sync_timestamp=1617657422252&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fworkerpool%2Fdownload%2Fworkerpool-6.1.4.tgz#6a972b6df82e38d50248ee2820aa98e2d0ad3090"
-  integrity sha1-apcrbfguONUCSO4oIKqY4tCtMJA=
 
 wrap-ansi@^5.1.0:
   version "5.1.0"

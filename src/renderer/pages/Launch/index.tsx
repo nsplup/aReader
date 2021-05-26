@@ -5,14 +5,21 @@ import { ipcRenderer } from 'electron'
 import {
   OPEN_DIALOG,
   FONTS_READY,
+  WINDOW_READY,
+  LOAD_LIBRARY,
+  LOAD_USERCONFIG,
+  START_IMPORT,
 } from '@constants'
 
 import Book from './Book'
 import Reader from '../Reader'
 import Placeholder from './Placeholder'
 import Toast from './Toast'
-import { generateFonts } from '@renderer/actions'
-import { WINDOW_READY } from '@constants'
+import {
+  generateFonts,
+  updataLibrary,
+  updataUserConfig,
+} from '@renderer/actions'
 import { classNames } from '@utils/classNames'
 import { toCSSText } from '@utils/toCSSText'
 
@@ -21,13 +28,21 @@ const logo = require('@static/aReader_icon.png').default
 
 interface Props {
   fonts: Array<string>
+  library: Library
+  userconfig: UserConfig
   generateFonts: (fonts: Array<string>) => any
+  updataLibrary: (library: Library) => any
+  updataUserConfig: (userconfig: UserConfig) => any
 }
 
 
 function Launch ({
   fonts,
+  library,
+  userconfig,
   generateFonts,
+  updataLibrary,
+  updataUserConfig,
 }: Props): JSX.Element {
   /** 打开文件选择器事件 */
   const handleOpenDialog = () => ipcRenderer.send(OPEN_DIALOG)
@@ -51,6 +66,7 @@ function Launch ({
     }
   }
 
+  /** 关闭右键菜单事件 */
   const handleCloseCMenu = () => {
     const { current: cMenuEl } = cMenu
     setIsCMenuActive(false)
@@ -61,12 +77,28 @@ function Launch ({
     })
   }
 
+  /** 正在导入的书籍数量 */
+  const [taskCount, setTaskCount] = useState(0)
+  const startImportListener = (event: Electron.IpcRendererEvent, taskCount: number) => {
+    setTaskCount(oldCount => oldCount + taskCount)
+  }
   useEffect(() => {
-    /** 主进程通信事件 */
-    const listener = (event: Electron.IpcRendererEvent, fonts: Array<string>) => {
+    /** 主线程请求字体列表事件 */
+    const fontsListener = (event: Electron.IpcRendererEvent, fonts: Array<string>) => {
       generateFonts(fonts)
     }
-    ipcRenderer.on(FONTS_READY, listener)
+    /** 主线程请求书架数据事件 */
+    const libraryListener = (event: Electron.IpcRendererEvent, library: Library) => {
+      updataLibrary(library)
+    }
+    /** 主线程请求用户数据事件 */
+    const userconfigListener = (event: Electron.IpcRendererEvent, userconfig: UserConfig) => {
+      updataUserConfig(userconfig)
+    }
+    ipcRenderer.on(FONTS_READY, fontsListener)
+    ipcRenderer.on(LOAD_LIBRARY, libraryListener)
+    ipcRenderer.on(LOAD_USERCONFIG, userconfigListener)
+    ipcRenderer.on(START_IMPORT, startImportListener)
     ipcRenderer.send(WINDOW_READY)
 
     /** 右键菜单事件 */
@@ -87,10 +119,11 @@ function Launch ({
     document.body.addEventListener('contextmenu', handleContextmenu)
     document.body.addEventListener('click', handleEnableReader)
 
-    setMessage(['测试'.repeat(100)])
-
     return () => {
-      ipcRenderer.off(FONTS_READY, listener)
+      ipcRenderer.off(FONTS_READY, fontsListener)
+      ipcRenderer.off(LOAD_LIBRARY, libraryListener)
+      ipcRenderer.off(LOAD_USERCONFIG, userconfigListener)
+      ipcRenderer.off(START_IMPORT, startImportListener)
       document.body.removeEventListener('contextmenu', handleContextmenu)
       document.body.removeEventListener('click', handleEnableReader)
     }
@@ -112,22 +145,45 @@ function Launch ({
           <i className="ri-file-add-line"></i>
           导入书籍
         </button>
-        <section className="launch-library">
+        <section
+          className="launch-library"
+          style={{
+            display: library && library.history.length > 0 ? '' : 'none'
+          }}
+        >
           <header className="launch-title">最近阅读</header>
-          <div className="launch-history fix">
-            <Placeholder/>
+          <div className="launch-content fix">
+
+          </div>
+        </section>
+        <section
+          className="launch-library"
+          style={{
+            display: taskCount > 0 || (library && library.categories[0].books.length > 0) ? '' : 'none'
+          }}
+        >
+          <header className="launch-title">书架</header>
+          <div className="launch-content fix">
             {
-              [...new Array(10).keys()].map(() => (
-                <Book cover={ false } title="异世界转生，地雷！异世界转生，地雷！" format="EPUB" progress={ 50 } />
-              ))
+              Array.from(Array(taskCount), (_, i) => (<Placeholder key={ i } />))
             }
           </div>
         </section>
-        <section className="launch-library">
-          <header className="launch-title">书架</header>
-        </section>
         {/* 最近阅读和书架均为空时显示 */}
-        <div className="flex-box" style={{ width: '100%', flexDirection: 'column' }}>
+        <div
+          className="flex-box"
+          style={{
+            display: taskCount > 0 
+              || (library
+              && library.history.length > 0
+              && library.categories[0].books.length > 0)
+                ? 'none'
+                : '',
+            width: '100%',
+            flexDirection: 'column',
+            marginTop: '103px',
+          }}
+        >
           <img src={ illustration } width="400" draggable="false"/>
           <p className="common-description">书图镜览，辞章讨论。</p>
         </div>
@@ -148,7 +204,12 @@ function Launch ({
           </div>
         </div>
       </div>
-      <Reader fonts={ fonts } isReaderActive={ isReaderActive } handleClose={ setIsReaderActive }/>
+      <Reader
+        fonts={ fonts }
+        isReaderActive={ isReaderActive }
+        handleClose={ setIsReaderActive }
+        userconfig={ userconfig }
+      />
       <div
         className="common-mask"
         style={{
@@ -180,9 +241,11 @@ function Launch ({
   )
 }
 
-const mapStateToProps = ({ fonts }: any) => ({ fonts })
+const mapStateToProps = ({ fonts, library, userconfig }: any) => ({ fonts, library, userconfig })
 const mapDispatchToProps = (dispatch: any) => ({
-  generateFonts: (fonts: Array<string>) => dispatch(generateFonts(fonts))
+  generateFonts: (fonts: Array<string>) => dispatch(generateFonts(fonts)),
+  updataLibrary: (library: Library) => dispatch(updataLibrary(library)),
+  updataUserConfig: (userconfig: UserConfig) => dispatch(updataUserConfig(userconfig))
 })
 const connectedLaunch = connect(mapStateToProps, mapDispatchToProps)(Launch)
 
