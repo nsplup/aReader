@@ -6,11 +6,14 @@ import {
   FONTS_READY,
 } from '@constants'
 import path from 'path'
+import fs from 'fs'
 
 // const workpool = require('workerpool')
 // const pool = workpool.pool()
 
 function init () {
+  /** 在目录生成data文件夹 */
+  fs.mkdir('./data', (err) => { if (err) { console.log(err) }})
   /** 「导入书籍」按钮事件处理 */
   ipcMain.on(OPEN_DIALOG, () => {
     dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {

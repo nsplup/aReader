@@ -46,7 +46,7 @@ function Launch ({
   const handleEnableReader = (e: MouseEvent) => {
     const { path } = e as any
 
-    if ([...path].some((el: Element) => el.className && el.className.includes('book-wrapper'))) {
+    if (!isReaderActive && [...path].some((el: Element) => el.className && el.className.includes('book-wrapper'))) {
       setIsReaderActive(true)
     }
   }
@@ -73,7 +73,7 @@ function Launch ({
     const handleContextmenu = (e: MouseEvent) => {
       const { path, pageX, pageY } = e as any
 
-      if ([...path].some((el: Element) => el.className && el.className.includes('book-wrapper'))) {
+      if (!isReaderActive && [...path].some((el: Element) => el.className && el.className.includes('book-wrapper'))) {
         setIsCMenuActive(true)
         const { current: cMenuEl } = cMenu
         
@@ -87,6 +87,8 @@ function Launch ({
     document.body.addEventListener('contextmenu', handleContextmenu)
     document.body.addEventListener('click', handleEnableReader)
 
+    setMessage(['测试'.repeat(100)])
+
     return () => {
       ipcRenderer.off(FONTS_READY, listener)
       document.body.removeEventListener('contextmenu', handleContextmenu)
@@ -94,12 +96,15 @@ function Launch ({
     }
   }, [])
 
+  useEffect(() => {
+    document.body.style.overflow = isReaderActive ? 'hidden' : ''
+  }, [isReaderActive])
+
   return (
     <>
       <div
         className="flex-box launch-wrapper"
         style={{
-          display: isReaderActive ? 'none' : 'block',
           userSelect: "none"
         }}
       >
@@ -143,7 +148,7 @@ function Launch ({
           </div>
         </div>
       </div>
-      <Reader fonts={ fonts } isReaderActive={ isReaderActive } />
+      <Reader fonts={ fonts } isReaderActive={ isReaderActive } handleClose={ setIsReaderActive }/>
       <div
         className="common-mask"
         style={{

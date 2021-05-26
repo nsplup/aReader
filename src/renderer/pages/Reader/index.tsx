@@ -47,11 +47,13 @@ const colorPlan = [
 interface Props {
   fonts: Array<string>
   isReaderActive: boolean
+  handleClose: Function
 }
 
 export default function Reader ({
   fonts,
-  isReaderActive
+  isReaderActive,
+  handleClose,
 }: Props): JSX.Element {
   /** 样式属性 */
   const [textColor, setTextColor] = useState('#b7a1ff')
@@ -64,13 +66,19 @@ export default function Reader ({
   const [fontSize, setFontSize] = useState(18)
   const [textIndent, setTextIndent] = useState(0)
   const [lineHeight, setLineHeight] = useState(50)
+
+  const handleCloseReader = () => {
+    handleClose(false)
+    /** to-do: 取消全屏 */
+  }
   return (
     <div
-      className="reader-wrapper"
-      style={{
-        visibility: isReaderActive ? 'visible' : 'hidden',
-        position: isReaderActive ? 'relative' : 'absolute',
-      }}
+      className={
+        classNames(
+          'reader-wrapper',
+          { 'reader-wrapper-active': isReaderActive }
+        )
+      }
     >
       <div className="flex-box reader-toolbar">
         <div
@@ -81,7 +89,7 @@ export default function Reader ({
             )
           }
         >
-          <i className="reader-tool common-active ri-arrow-left-line">
+          <i className="reader-tool common-active ri-arrow-left-line" onClick={ handleCloseReader }>
             <span className="reader-tool-tips">返回</span>
           </i>
           <i className="reader-tool common-active ri-bookmark-line">
@@ -118,7 +126,7 @@ export default function Reader ({
       <div
         className="common-mask"
         style={{
-          display: sMenuStatus !== null ? 'block' : 'none'
+          zIndex: sMenuStatus !== null ? 999 : -1
         }}
         onClick={handleCloseSMenu}
       ></div>
