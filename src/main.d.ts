@@ -6,6 +6,8 @@ interface Library {
 }
 
 interface Infomation {
+  /** SHA256 */
+  hash: string
   /** 书籍标题 */
   title: string
   /** 书籍格式 */

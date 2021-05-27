@@ -14,7 +14,7 @@ function loadEPUB (filePath, res, rej) {
     .on('data', (data) => {
       const { hash } = data
       const bookPath = path.resolve(dirName, hash)
-      const infomation = { format: 'EPUB', createdTime: Date.now() }
+      const infomation = { hash, format: 'EPUB', createdTime: Date.now() }
 
       fs.readdir(bookPath, (err, files) => {
         /** 是否存在书籍缓存 */

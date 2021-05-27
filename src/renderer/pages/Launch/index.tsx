@@ -128,6 +128,7 @@ function Launch ({
       document.body.removeEventListener('click', handleEnableReader)
     }
   }, [])
+  console.log(library)
 
   useEffect(() => {
     document.body.style.overflow = isReaderActive ? 'hidden' : ''
@@ -167,6 +168,19 @@ function Launch ({
             {
               Array.from(Array(taskCount), (_, i) => (<Placeholder key={ i } />))
             }
+            {
+              library && library.categories[0].books.map((infomation, index) => {
+                const { hash, title, cover, format } = infomation
+                return (<Book
+                  hash={ hash }
+                  title={ title }
+                  cover={ cover }
+                  format={ format }
+                  progress={ 0 }
+                  key={ index }
+                />)
+              })
+            }
           </div>
         </section>
         {/* 最近阅读和书架均为空时显示 */}
@@ -174,14 +188,14 @@ function Launch ({
           className="flex-box"
           style={{
             display: taskCount > 0 
-              || (library
-              && library.history.length > 0
-              && library.categories[0].books.length > 0)
+              || (library && library.history.length > 0)
+              || (library && library.categories[0].books.length > 0)
                 ? 'none'
                 : '',
+            position: 'absolute',
+            bottom: '80px',
             width: '100%',
             flexDirection: 'column',
-            marginTop: '103px',
           }}
         >
           <img src={ illustration } width="400" draggable="false"/>
@@ -193,6 +207,8 @@ function Launch ({
           style={{
             justifyContent: 'flex-end',
             alignItems: 'flex-end',
+            position: 'absolute',
+            bottom: '0',
             width: '100%',
             padding: '20px',
             boxSizing: 'border-box',
