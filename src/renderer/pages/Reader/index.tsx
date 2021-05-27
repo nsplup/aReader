@@ -99,6 +99,7 @@ export default function Reader ({
   })
   /** 书籍内容 */
   const [content, setContent] = useState('')
+  const [textCache, setTextCache] = useState(null)
   const handleCloseSMenu = () => {
     setSMenuStatus(null)
   }
@@ -137,10 +138,19 @@ export default function Reader ({
   }, [currentBookHash])
 
   useEffect(() => {
-    ipcRenderer.on(LOAD_BOOK, (event, content) => {
+    const loadBookListener = (event: Electron.IpcRendererEvent, content: any) => {
+      if (bookInfo.format === 'TEXT') {
+        setTextCache(content)
+        content = content[bookInfo.manifest[bookInfo.spine[0]].href]
+      }
       setContent(content)
-    })
-  }, [])
+    }
+    ipcRenderer.on(LOAD_BOOK, loadBookListener)
+
+    return () => {
+      ipcRenderer.off(LOAD_BOOK, loadBookListener)
+    }
+  }, [bookInfo])
 
   return (
     <div
@@ -151,7 +161,15 @@ export default function Reader ({
         )
       }
     >
-      <div dangerouslySetInnerHTML={{ __html: content }}></div>
+      <div
+        className={
+          classNames(
+            'reader-content'
+          )
+        }
+      >
+        <div dangerouslySetInnerHTML={{ __html: content }}></div>
+      </div>
       <div className="flex-box reader-toolbar">
         <div
           className={

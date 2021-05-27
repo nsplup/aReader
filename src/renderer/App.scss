@@ -192,12 +192,33 @@ body, html, #root {
   opacity: 0;
   transition: all .3s;
 
-  background-color: gray;
+  background-color: #ffffff;
 
   &-active {
     z-index: 999;
     transform: scale(1) translate3d(0, 0, 0);
     opacity: 1;
+  }
+}
+
+.reader-content {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  padding: 20px;
+
+  box-sizing: border-box;
+  & > div {
+    white-space: pre-wrap;
+  }
+  & * {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  & li, & ol {
+    display: table;
+    list-style: none;
   }
 }
 
@@ -385,7 +406,7 @@ body, html, #root {
       right: 0;
       top: 0;
       width: 50px;
-      height: 35.5px;
+      height: 35px;
       outline: none;
       padding-left: 10px;
       border: none;
@@ -420,6 +441,8 @@ body, html, #root {
   flex-direction: column;
   justify-content: start;
   position: absolute;
+  top: 0;
+  left: 0;
   z-index: 999;
   width: 350px;
   height: 100%;

@@ -103,7 +103,11 @@ function init () {
         event.reply(LOAD_BOOK, content)
       })
     } else {
+      const resolvedPath = findFile('.content', path.resolve('./data', hash))
 
+      fs.readFile(resolvedPath[0], { encoding: 'utf-8' }, (err, data) => {
+        event.reply(LOAD_BOOK, JSON.parse(data))
+      })
     }
   })
 }
