@@ -17,7 +17,7 @@ interface Infomation {
   /** 封面路径 */
   cover: string | null
   /** 书籍内容 */
-  manifest: Array<Manifest>
+  manifest: Manifest
   /** 书籍排版顺序 */
   spine: Array<string>
   /** 书籍目录 */
@@ -64,8 +64,10 @@ interface ColorPlan {
 }
 
 interface Manifest {
-  id: string
-  href: string
+  [id: string]: {
+    href: string,
+    'media-type': string
+  }
 }
 
 interface Nav {

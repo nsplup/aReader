@@ -1147,6 +1147,13 @@
   dependencies:
     "@types/react" "*"
 
+"@types/react-virtualized-auto-sizer@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.nlark.com/@types/react-virtualized-auto-sizer/download/@types/react-virtualized-auto-sizer-1.0.0.tgz?cache=0&sync_timestamp=1621247973002&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40types%2Freact-virtualized-auto-sizer%2Fdownload%2F%40types%2Freact-virtualized-auto-sizer-1.0.0.tgz#fc32f30a8dab527b5816f3a757e1e1d040c8f272"
+  integrity sha1-/DLzCo2rUntYFvOnV+Hh0EDI8nI=
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-window@^1.8.3":
   version "1.8.3"
   resolved "https://registry.nlark.com/@types/react-window/download/@types/react-window-1.8.3.tgz?cache=0&sync_timestamp=1621242768047&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40types%2Freact-window%2Fdownload%2F%40types%2Freact-window-1.8.3.tgz#14f74b144b4e3df9421eb31182dc580b7ccc7617"
@@ -5847,6 +5854,11 @@ react-slider@^1.1.4:
   version "1.1.4"
   resolved "https://registry.nlark.com/react-slider/download/react-slider-1.1.4.tgz#08b55f9be3e04cc10ae00cc3aedb6891dffe9bf3"
   integrity sha1-CLVfm+PgTMEK4AzDrttokd/+m/M=
+
+react-virtualized-auto-sizer@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.npm.taobao.org/react-virtualized-auto-sizer/download/react-virtualized-auto-sizer-1.0.5.tgz#9eeeb8302022de56fbd7a860b08513120ce36509"
+  integrity sha1-nu64MCAi3lb716hgsIUTEgzjZQk=
 
 react-window@^1.8.6:
   version "1.8.6"

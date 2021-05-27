@@ -227,6 +227,7 @@ body, html, #root {
 
   background-color: $primary-color-pale;
   transform: translate3d(0, 130%, 0);
+  box-shadow: 0 0 10px 0 rgba(55, 55, 55, .2);
   
   transition: transform .15s ease-out;
 
@@ -331,9 +332,8 @@ body, html, #root {
         background: rgba(50, 50, 50, .1);
       }
       &-active {
-        color: #ffffff;
+        color: $primary-color-light;
         font-weight: bold;
-        background-color: $primary-color !important;
       }
     }
   }
@@ -353,7 +353,7 @@ body, html, #root {
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: $primary-color;
+        background: $primary-color-light;
         transform: translate3d(0, 35px, 0);
         content: "";
       }
@@ -392,7 +392,7 @@ body, html, #root {
       border-radius: 5px;
       color: #ffffff;
       font-weight: bold;
-      background: $primary-color;
+      background: $primary-color-light;
       transform: translate3d(calc(100% - 10px), 0, 0);
       transition: transform .2s ease-out;
 
@@ -413,6 +413,76 @@ body, html, #root {
     color: $common-text-main;
     background-color: rgb(224 224 224);
     transform: translate3d(0, 0, 0);
+  }
+}
+
+.reader-nav {
+  flex-direction: column;
+  justify-content: start;
+  position: absolute;
+  z-index: 999;
+  width: 350px;
+  height: 100%;
+  user-select: none;
+  padding: 20px 0;
+  background: $primary-color-pale;
+  box-sizing: border-box;
+  opacity: 0;
+  transform: translate3d(-100%, 0, 0);
+  transition: transform .3s ease, opacity .3s ease-out;
+
+  &-label {
+    position: relative;
+    right: 0;
+    width: calc(100% - 40px) !important;
+    height: 55px;
+    margin: 0 auto;
+    padding-left: 40px;
+    padding-right: 10px;
+    border-radius: 10px;
+    color: $common-text-main;
+    font-weight: bold;
+    box-sizing: border-box;
+    & p {
+      width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    &:hover {
+      background: rgba(50, 50, 50, .1);
+    }
+    &::after {
+      display: block;
+      position: absolute;
+      left: 15px;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      height: 10px;
+      margin: auto;
+      border-radius: 50%;
+      background-color: rgba(50, 50, 50, .3);
+      content: '';
+    }
+    &-active {
+      &::after {
+        background-color: $primary-color;
+      }
+    }
+  }
+  &-sub {
+    padding-left: 70px;
+    font-weight: unset;
+    &::after {
+      left: 45px;
+      transform: scale(.9) rotate(45deg);
+      border-radius: unset;
+    }
+  }
+  &-active {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
   }
 }
 

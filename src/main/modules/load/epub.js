@@ -72,9 +72,17 @@ function loadEPUB (filePath, res, rej) {
                     : filename
                   /** 获取manifest */
                   if (manifest && manifest.item) {
-                    infomation.manifest = manifest.item
+                    let temp = {}
+                    for (let i = 0, len = manifest.item.length; i < len; i++) {
+                      const item = manifest.item[i]
+                      temp[item.id] = {
+                        href: item.href,
+                        'media-type': item['media-type']
+                      }
+                    }
+                    infomation.manifest = temp
                   } else {
-                    rej([filePath, '读取失败：不是合法的content.opf文件'])
+                    rej([filePath, '读取失败：不是标准的content.opf文件'])
                     return
                   }
 
@@ -84,7 +92,7 @@ function loadEPUB (filePath, res, rej) {
                     const regExp = /\..+$/
                     /** 是否为路径 */
                     if (!regExp.test(coverPath)) {
-                      coverPath = infomation.manifest.filter(({ id }) => id === coverPath)[0]
+                      coverPath = infomation.manifest[coverPath]
                       if (typeof coverPath === 'object' && coverPath.href) {
                         coverPath = coverPath.href
                       }
@@ -102,42 +110,64 @@ function loadEPUB (filePath, res, rej) {
                   }
 
                   /** 获取spine */
+                  let temp = []
                   if (spine && spine.itemref) {
-                    infomation.spine = spine.itemref.map(({ idref }) => idref)
+                    for (let i = 0, len = spine.itemref.length; i < len; i++) {
+                      const { idref } = spine.itemref[i]
+                      const tm = infomation.manifest[idref]
+                      if (tm && tm['media-type'] === 'application/xhtml+xml') {
+                        temp.push(idref)
+                      }
+                    }
                   } else {
                     /** 从manifest生成spine */
-                    infomation.spine = infomation.manifest.map(({ id }) => id)
+                    for (let i = 0, len = manifest.item.length; i < len; i++) {
+                      const tm = manifest.item[i]
+                      if (tm && tm['media-type'] === 'application/xhtml+xml') {
+                        temp.push(tm.id)
+                      }
+                    }
                   }
+                  infomation.spine = temp
 
                   /** 获取目录 */
                   fs.readFile(
                     findFile('toc.ncx', bookPath)[0],
                     { encoding: 'utf8' },
                     (err, data) => {
+                      let nav
                       if (err) {
                         console.log('获取目录失败：toc.ncx文件丢失')
-                      }
-                      /** 目录转化 */
-                      const formatNav = (navPoints, isSub = false) => {
-                        let results = [];
-
-                        [].concat(navPoints).forEach(({
-                          id, navLabel, content, navPoint
-                        }) => {
-                          let nav = {
-                            id,
-                            navLabel: navLabel.text,
-                            href: content.src,
-                            isSub
+                        nav = []
+                      } else {
+                        /** 目录转化 */
+                        const formatNav = (navPoints, isSub = false) => {
+                          let results = [];
+                          navPoints = [].concat(navPoints)
+  
+                          for (let i = 0, len = navPoints.length; i < len; i++) {
+                            const { id, navLabel, content, navPoint } = navPoints[i]
+                            if (infomation.spine.includes(id)) {
+                              let nav = {
+                                id,
+                                navLabel: navLabel.text,
+                                href: content.src,
+                                isSub
+                              }
+                              results.push(nav)
+                              if (typeof navPoint === 'object') {
+                                results.push(...formatNav(navPoint, true))
+                              }
+                            }
                           }
-                          results.push(nav)
-                          if (typeof navPoint === 'object') {
-                            results.push(...formatNav(navPoint, true))
-                          }
-                        })
-                        return results
+                          return results
+                        }
+                        try {
+                          nav = formatNav(fxp.parse(data, option).ncx.navMap.navPoint)
+                        } catch (err) {
+                          rej([filePath, err])
+                        }
                       }
-                      let nav = formatNav(fxp.parse(data, option).ncx.navMap.navPoint)
 
                       infomation.nav = nav
 

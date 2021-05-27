@@ -56,12 +56,16 @@ function Launch ({
 
   /** Reader组件变量 */
   const [isReaderActive, setIsReaderActive] = useState(false)
+  const [currentBook, setCurrentBook] = useState('')
   
   /** 激活阅读窗口事件 */
   const handleEnableReader = (e: MouseEvent) => {
     const { path } = e as any
+    const book = [...path].filter((el: Element) => el.className && el.className.includes('book-wrapper'))[0]
 
-    if (!isReaderActive && [...path].some((el: Element) => el.className && el.className.includes('book-wrapper'))) {
+    if (!isReaderActive && book) {
+      const bookHash = book.getAttribute('data-hash')
+      setCurrentBook(bookHash)
       setIsReaderActive(true)
     }
   }
@@ -128,7 +132,6 @@ function Launch ({
       document.body.removeEventListener('click', handleEnableReader)
     }
   }, [])
-  console.log(library)
 
   useEffect(() => {
     document.body.style.overflow = isReaderActive ? 'hidden' : ''
@@ -225,6 +228,8 @@ function Launch ({
         isReaderActive={ isReaderActive }
         handleClose={ setIsReaderActive }
         userconfig={ userconfig }
+        currentBookHash={ currentBook }
+        library={ library }
       />
       <div
         className="common-mask"

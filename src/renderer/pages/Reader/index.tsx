@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { FixedSizeList  } from 'react-window'
 import { HexColorPicker } from 'react-colorful'
+import AutoSizer from "react-virtualized-auto-sizer";
 import Slider from 'react-slider'
 import { classNames } from '@utils/classNames'
 
@@ -57,6 +58,8 @@ interface Props {
   isReaderActive: boolean
   handleClose: Function
   userconfig: UserConfig
+  currentBookHash: string
+  library: Library
 }
 
 export default function Reader ({
@@ -64,6 +67,8 @@ export default function Reader ({
   isReaderActive,
   handleClose,
   userconfig,
+  currentBookHash,
+  library,
 }: Props): JSX.Element {
   /** 样式属性 */
   const [renderMode, setRenderMode] = useState('page')
@@ -77,7 +82,18 @@ export default function Reader ({
   const [textColor, setTextColor] = useState('#b7a1ff')
   const [backgroundColor, setBackgroundColor] = useState('#2e003e')
   /** 状态属性 */
-  const [sMenuStatus, setSMenuStatus] = useState(null) /** 可选值：null/font/color/search */
+  const [sMenuStatus, setSMenuStatus] = useState(null) /** 可选值：null/nav/font/color/search */
+  const [bookInfo, setBookInfo] = useState<Infomation>({
+    title: '',
+    cover: null,
+    format: 'EPUB',
+    hash: '',
+    nav: [],
+    manifest: {},
+    createdTime: 0,
+    spine: [],
+    bookmark: { default: [], detail: [] }
+  })
   const handleCloseSMenu = () => {
     setSMenuStatus(null)
   }
@@ -94,6 +110,18 @@ export default function Reader ({
     fontList.current.scrollToItem(fonts.indexOf(fontFamily))
   }
 
+  const navList = useRef(null)
+  const handleOpenNavList = () => {
+    setSMenuStatus('nav')
+  }
+
+  useEffect(() => {
+    if (currentBookHash && Object.keys(currentBookHash).length > 0) {
+      setBookInfo(library.categories[0].books.filter(({ hash }) => hash === currentBookHash)[0])
+    } else {
+      isReaderActive && handleCloseReader()
+    }
+  }, [currentBookHash])
   return (
     <div
       className={
@@ -108,7 +136,7 @@ export default function Reader ({
           className={
             classNames(
               'flex-box reader-tools',
-              { 'reader-tools-focus': sMenuStatus !== null }
+              { 'reader-tools-focus': sMenuStatus !== null && sMenuStatus !== 'nav' }
             )
           }
         >
@@ -122,7 +150,7 @@ export default function Reader ({
             <span className="reader-tool-tips">滚动模式</span>
             {/* <span className="reader-tool-tips">分页模式</span> */}
           </i>
-          <i className="reader-tool common-active ri-list-unordered">
+          <i className="reader-tool common-active ri-list-unordered" onClick={ handleOpenNavList }>
             <span className="reader-tool-tips">目录</span>
           </i>
           <i className="reader-tool common-active ri-text" onClick={ handleOpenFontStyle }>
@@ -157,7 +185,7 @@ export default function Reader ({
         className={
           classNames(
             'secondary-menu',
-            { 's-m-active': sMenuStatus !== null }
+            { 's-m-active': sMenuStatus !== null && sMenuStatus !== 'nav' }
           )
         }
       >
@@ -288,6 +316,51 @@ export default function Reader ({
             <input type="text" className="s-m-input" spellCheck="false"/>
           </div>
         </div>
+      </div>
+      <div
+        className={
+          classNames(
+            'reader-nav',
+            { 'reader-nav-active': sMenuStatus === 'nav' }
+          )
+        }
+      >
+        <AutoSizer>
+          {
+            ({ width, height }) => (
+              <FixedSizeList
+                width={ width }
+                height={ height }
+                itemCount={ bookInfo.nav.length }
+                itemSize={ 55 }
+                ref={ navList }
+              >
+                {
+                  ({index, style}) => {
+                    const { id, navLabel, href, isSub } = bookInfo.nav[index]
+                    return (
+                      <div
+                        style={ style }
+                        className={
+                          classNames(
+                            'common-active reader-nav-label',
+                            { 'reader-nav-sub': isSub },
+                            { 'reader-nav-label-active': false },
+                          )
+                        }
+                        data-href={ href }
+                        key={ index }
+                        title={ navLabel }
+                      >
+                        <p>{ navLabel }</p>
+                      </div>
+                    )
+                  }
+                }
+              </FixedSizeList>
+            )
+          }
+        </AutoSizer>
       </div>
     </div>
   )
