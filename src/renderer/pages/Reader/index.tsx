@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { FixedSizeList  } from 'react-window'
 import { HexColorPicker } from 'react-colorful'
-import AutoSizer from "react-virtualized-auto-sizer";
+import AutoSizer from "react-virtualized-auto-sizer"
 import Slider from 'react-slider'
 import { classNames } from '@utils/classNames'
+import { LOAD_BOOK, READ_BOOK } from '@constants'
 
 const searchPlaceholder = require('@static/illustration/undraw_Web_search_re_efla.svg').default
 
@@ -60,6 +61,7 @@ interface Props {
   userconfig: UserConfig
   currentBookHash: string
   library: Library
+  ipcRenderer: Electron.IpcRenderer
 }
 
 export default function Reader ({
@@ -69,6 +71,7 @@ export default function Reader ({
   userconfig,
   currentBookHash,
   library,
+  ipcRenderer,
 }: Props): JSX.Element {
   /** 样式属性 */
   const [renderMode, setRenderMode] = useState('page')
@@ -94,6 +97,8 @@ export default function Reader ({
     spine: [],
     bookmark: { default: [], detail: [] }
   })
+  /** 书籍内容 */
+  const [content, setContent] = useState('')
   const handleCloseSMenu = () => {
     setSMenuStatus(null)
   }
@@ -116,12 +121,27 @@ export default function Reader ({
   }
 
   useEffect(() => {
-    if (currentBookHash && Object.keys(currentBookHash).length > 0) {
-      setBookInfo(library.categories[0].books.filter(({ hash }) => hash === currentBookHash)[0])
+    if (currentBookHash && typeof currentBookHash === 'string') {
+      const book = library.categories[0].books.filter(({ hash }) => hash === currentBookHash)[0]
+      setBookInfo(book)
+      const { spine, manifest, format } = book
+    
+      ipcRenderer.send(READ_BOOK, {
+        hash: currentBookHash,
+        href: manifest[spine[0]].href,
+        format,
+      })
     } else {
       isReaderActive && handleCloseReader()
     }
   }, [currentBookHash])
+
+  useEffect(() => {
+    ipcRenderer.on(LOAD_BOOK, (event, content) => {
+      setContent(content)
+    })
+  }, [])
+
   return (
     <div
       className={
@@ -131,6 +151,7 @@ export default function Reader ({
         )
       }
     >
+      <div dangerouslySetInnerHTML={{ __html: content }}></div>
       <div className="flex-box reader-toolbar">
         <div
           className={

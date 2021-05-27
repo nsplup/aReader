@@ -6,9 +6,13 @@ import {
   FONTS_READY,
   LOAD_LIBRARY,
   LOAD_USERCONFIG,
+  READ_BOOK,
+  LOAD_BOOK,
 } from '@constants'
 import fs from 'fs'
+import path from 'path'
 import { Worker } from 'worker_threads'
+import { findFile } from '@utils/findFile'
 
 // const loadProcess = new Worker('./loadProcess.js')
 // loadProcess.postMessage({ paths: process.argv.slice(2) })
@@ -85,6 +89,22 @@ function init () {
           event.reply(LOAD_USERCONFIG, userconfig)
         })
       })
+  })
+
+  /** 获取书籍内容 */
+  ipcMain.on(READ_BOOK, (event: Electron.IpcMainEvent, { hash, href, format }) => {
+    if (format === 'EPUB') {
+      const resolvedPath = findFile(href, path.resolve('./data', hash))
+      
+      fs.readFile(resolvedPath[0], { encoding: 'utf-8' }, (err, data) => {
+        const start = data.indexOf('<body')
+        const end = data.indexOf('</body>')
+        const content = data.slice(start, end).replace(/<body\s*[^>]*>/, '')
+        event.reply(LOAD_BOOK, content)
+      })
+    } else {
+
+    }
   })
 }
 

@@ -230,6 +230,7 @@ function Launch ({
         userconfig={ userconfig }
         currentBookHash={ currentBook }
         library={ library }
+        ipcRenderer={ ipcRenderer }
       />
       <div
         className="common-mask"

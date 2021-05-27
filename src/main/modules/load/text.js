@@ -84,7 +84,7 @@ function loadTEXT (filePath, res, rej) {
             chunks.push(chunk)
             chunk = null
   
-            const manifest = []
+            const manifest = {}
             const spine = []
             const nav = []
             const content = {}
@@ -109,10 +109,7 @@ function loadTEXT (filePath, res, rej) {
                 let filename = '.' + _id
                 content[filename] = chunk[j].join('\n')
 
-                manifest.push({
-                  id: _id,
-                  href: filename
-                })
+                manifest[_id] = { href: filename }
                 spine.push(_id)
                 if (j === 0 && navLabel.length > 0) {
                   nav.push({
