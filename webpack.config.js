@@ -1,6 +1,4 @@
 const path = require('path')
-const { CleanWebpackPlugin } = require('clean-webpack-plugin')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
 const { HotModuleReplacementPlugin } = require('webpack')
 
 module.exports = {
@@ -65,9 +63,6 @@ module.exports = {
     ]
   },
   plugins: [
-    new HtmlWebpackPlugin({
-      template: './src/static/index.html',
-    }),
     new HotModuleReplacementPlugin()
   ],
   resolve: {

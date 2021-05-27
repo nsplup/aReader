@@ -7,8 +7,15 @@ import {
   LOAD_LIBRARY,
   LOAD_USERCONFIG,
 } from '@constants'
-import path from 'path'
 import fs from 'fs'
+import { Worker } from 'worker_threads'
+
+// const loadProcess = new Worker('./loadProcess.js')
+// loadProcess.postMessage({ paths: process.argv.slice(2) })
+
+// loadProcess.on('message', (message) => {
+//   console.log(message.result)
+// })
 
 function init () {
   /** 在目录生成data文件夹 */

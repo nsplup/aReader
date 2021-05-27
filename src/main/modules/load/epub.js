@@ -1,34 +1,20 @@
-import _7z from 'node-7z'
+const _7z = require('node-7z')
 const _7zbin = require('7zip')['7z']
-import fxp from 'fast-xml-parser'
-import path from 'path'
-import fs from 'fs'
-import { findFile } from '@utils/findFile'
-import { getFileMimeType } from '@utils/getFileMimeType'
+const fxp = require('fast-xml-parser')
+const path = require('path')
+const fs = require('fs')
+const findFile = require('./findFile')
+const getFileMimeType = require('./getFileMimeType')
 
 const dirName = path.resolve('.', 'data')
 
-// const defaultInfo = {
-//   title: '',
-//   format: 'EPUB',
-//   createdTime: 0,
-//   cover: null,
-//   manifest: [],
-//   spine: [],
-//   nav: [],
-//   bookmark: {
-//     default: [],
-//     detail: []
-//   },
-// }
-
-function loadEPUB (filePath: string, res: Function, rej: Function) {
+function loadEPUB (filePath, res, rej) {
   /** 计算 SHA256 */
   _7z.hash(path.resolve(filePath), { hashMethod: 'sha256', $bin: _7zbin })
     .on('data', (data) => {
       const { hash } = data
       const bookPath = path.resolve(dirName, hash)
-      const infomation: any = { format: 'EPUB', createdTime: Date.now() }
+      const infomation = { format: 'EPUB', createdTime: Date.now() }
 
       fs.readdir(bookPath, (err, files) => {
         /** 是否存在书籍缓存 */
@@ -54,7 +40,7 @@ function loadEPUB (filePath: string, res: Function, rej: Function) {
             (err, data) => {
               /** META-INF是否丢失 */
               if (err) {
-                rej('读取失败：META-INF文件丢失')
+                rej([filePath, '读取失败：META-INF文件丢失'])
                 return
               }
               /** 从META-INF获取content.opf路径 */
@@ -70,7 +56,7 @@ function loadEPUB (filePath: string, res: Function, rej: Function) {
                 { encoding: 'utf8' },
                 (err, data) => {
                   if (err) {
-                    rej('读取失败：content.opf文件丢失')
+                    rej([filePath, '读取失败：content.opf文件丢失'])
                     return
                   }
 
@@ -88,7 +74,7 @@ function loadEPUB (filePath: string, res: Function, rej: Function) {
                   if (manifest && manifest.item) {
                     infomation.manifest = manifest.item
                   } else {
-                    rej('读取失败：不是合法的content.opf文件')
+                    rej([filePath, '读取失败：不是合法的content.opf文件'])
                     return
                   }
 
@@ -98,7 +84,7 @@ function loadEPUB (filePath: string, res: Function, rej: Function) {
                     const regExp = /\..+$/
                     /** 是否为路径 */
                     if (!regExp.test(coverPath)) {
-                      coverPath = infomation.manifest.filter(({ id }: any) => id === coverPath)[0]
+                      coverPath = infomation.manifest.filter(({ id }) => id === coverPath)[0]
                       if (typeof coverPath === 'object' && coverPath.href) {
                         coverPath = coverPath.href
                       }
@@ -117,10 +103,10 @@ function loadEPUB (filePath: string, res: Function, rej: Function) {
 
                   /** 获取spine */
                   if (spine && spine.itemref) {
-                    infomation.spine = spine.itemref.map(({ idref }: any) => idref)
+                    infomation.spine = spine.itemref.map(({ idref }) => idref)
                   } else {
                     /** 从manifest生成spine */
-                    infomation.spine = infomation.manifest.map(({ id }: any) => id)
+                    infomation.spine = infomation.manifest.map(({ id }) => id)
                   }
 
                   /** 获取目录 */
@@ -132,8 +118,8 @@ function loadEPUB (filePath: string, res: Function, rej: Function) {
                         console.log('获取目录失败：toc.ncx文件丢失')
                       }
                       /** 目录转化 */
-                      const formatNav = (navPoints: any, isSub = false) => {
-                        let results: Nav[] = [];
+                      const formatNav = (navPoints, isSub = false) => {
+                        let results = [];
 
                         [].concat(navPoints).forEach(({
                           id, navLabel, content, navPoint
@@ -161,7 +147,7 @@ function loadEPUB (filePath: string, res: Function, rej: Function) {
                       fs.writeFile(
                         path.resolve(bookPath, '.infomation'),
                         JSON.stringify(infomation),
-                        (err) => { if (err) { rej('.infomation 文件保存失败') } }
+                        (err) => { if (err) { rej([filePath, '.infomation 文件保存失败']) } }
                       )
                     }
                   )
@@ -172,4 +158,4 @@ function loadEPUB (filePath: string, res: Function, rej: Function) {
     })
 }
 
-export { loadEPUB }
+module.exports = loadEPUB

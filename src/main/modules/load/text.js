@@ -1,15 +1,15 @@
-import _7z from 'node-7z'
+const _7z = require('node-7z')
 const _7zbin = require('7zip')['7z']
-import jschardet from 'jschardet'
-import iconv from 'iconv-lite'
-import path from 'path'
-import fs from 'fs'
+const jschardet = require('jschardet')
+const iconv = require('iconv-lite')
+const path = require('path')
+const fs = require('fs')
 
 const chunkSize = 1024 * 103 /** 最大分块大小 */
 const dirName = path.resolve('.', 'data')
 
 /** 分块函数 */
-function _chunk (chunks: string[], maxSize: number) {
+function _chunk (chunks, maxSize) {
   const results = []
   let result = []
   let total = 0
@@ -31,7 +31,7 @@ function _chunk (chunks: string[], maxSize: number) {
 }
 
 
-function loadTEXT (filePath: string, res: Function, rej: Function) {
+function loadTEXT (filePath, res, rej) {
     /** 计算 SHA256 */
     _7z.hash(path.resolve(filePath), { hashMethod: 'sha256', $bin: _7zbin })
     .on('data', (data) => {
@@ -64,7 +64,7 @@ function loadTEXT (filePath: string, res: Function, rej: Function) {
               .split(/[\r\n]/)
             const regExp = /^(卷\s*[0123456789一二三四五六七八九十零〇百千两壹貳叁肆伍陸柒捌玖拾佰仟]+.*|第\s*[0123456789一二三四五六七八九十零〇百千两壹貳叁肆伍陸柒捌玖拾佰仟]+\s*[章回卷节集部]+.*|[0123456789]+\s*.+)$/
             const chunks = []
-            let chunk: any = []
+            let chunk = []
             const navLabelMark = '#**镜览**#' /** 目录标记 */
   
             /** 生成目录并按照目录分块；去除文字两边空格及空白行 */
@@ -87,7 +87,7 @@ function loadTEXT (filePath: string, res: Function, rej: Function) {
             const manifest = []
             const spine = []
             const nav = []
-            const content: any = {}
+            const content = {}
             
             for (let i = 0, len = chunks.length; i < len; i++) {
               let id = 'text-chunk-' + i
@@ -140,7 +140,7 @@ function loadTEXT (filePath: string, res: Function, rej: Function) {
               JSON.stringify(content),
               (err) => {
                 if (err) {
-                  rej('.content 文件保存失败')
+                  rej([filePath, '.content 文件保存失败'])
                   return
                 }
 
@@ -150,16 +150,16 @@ function loadTEXT (filePath: string, res: Function, rej: Function) {
                 fs.writeFile(
                   path.resolve(bookPath, '.infomation'),
                   JSON.stringify(infomation),
-                  (err) => { if (err) { rej('.infomation 文件保存失败') } }
+                  (err) => { if (err) { rej([filePath, '.infomation 文件保存失败']) } }
                 )
               }
             )
           } catch (e) {
-            rej(e)
+            rej([filePath, e])
           }
         }
       })
     })
 }
 
-export { loadTEXT }
+module.exports = loadTEXT
