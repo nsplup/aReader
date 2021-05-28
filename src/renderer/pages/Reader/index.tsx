@@ -377,8 +377,15 @@ export default function Reader ({
           >
             <span className="reader-tool-tips">上一章</span>
           </i>
-          <span className="flex-box reader-pnum">
+          <span className="reader-tool flex-box reader-pnum">
             <Flipping value={ pageNumber + 1 }/>
+            <span className="reader-tool-tips">
+              {
+                Math.floor((pageNumber + 1) / bookInfo.spine.length * 100) === 0
+                ? '1%'
+                : Math.floor((pageNumber + 1) / bookInfo.spine.length * 100) + '%'
+              }
+            </span>
           </span>
           <i
             className={

@@ -330,6 +330,11 @@ body, html, #root {
 .reader-pnum {
   width: 70px;
   text-align: center;
+  background-color: unset !important;
+
+  &:hover .reader-tool-tips {
+    transform: translate3d(-50%, -22px, 0) !important;
+  }
 }
 
 .secondary-menu {
