@@ -217,6 +217,10 @@ body, html, #root {
   & * {
     margin: 0 !important;
     padding: 0 !important;
+
+    cursor: unset !important;
+    color: inherit !important;
+    text-decoration: unset !important;
   }
   & li, & ol {
     display: table;

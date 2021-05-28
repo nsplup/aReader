@@ -186,16 +186,16 @@ export default function Reader ({
     /** 当格式未TEXT并存在缓存时从缓存获取书籍内容 */
     if (format === 'TEXT' && textCache) {
       setContent(textCache[href])
+      /** 重置页面进度 */
+      handleRestScroll()
+      setRenderCount(0)
     } else {
       ipcRenderer.send(READ_BOOK, {
-        hash: currentBookHash,
+        hash,
         href,
         format,
       })
     }
-    /** 重置页面进度 */
-    handleRestScroll()
-    setRenderCount(0)
   }
 
   const handleChangePage = (offset: number) => {
@@ -267,6 +267,9 @@ export default function Reader ({
         content = content[bookInfo.manifest[bookInfo.spine[0]].href]
       }
       setContent(content)
+      /** 重置页面进度 */
+      handleRestScroll()
+      setRenderCount(0)
     }
     ipcRenderer.on(LOAD_BOOK, loadBookListener)
 
@@ -274,6 +277,20 @@ export default function Reader ({
       ipcRenderer.off(LOAD_BOOK, loadBookListener)
     }
   }, [bookInfo])
+
+  useEffect(() => {
+    const { current } = contentEl
+    const handleClickProxy = (e: MouseEvent) => {
+      e.stopPropagation()
+      e.preventDefault()
+    }
+
+    current.addEventListener('click', handleClickProxy, { passive: false })
+
+    return () => {
+      current.removeEventListener('click', handleClickProxy)
+    }
+  }, [])
 
   return (
     <div
