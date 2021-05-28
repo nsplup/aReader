@@ -6,6 +6,8 @@ import Slider from 'react-slider'
 import { classNames } from '@utils/classNames'
 import { LOAD_BOOK, READ_BOOK } from '@constants'
 
+import Flipping from './Flipping'
+
 const searchPlaceholder = require('@static/illustration/undraw_Web_search_re_efla.svg').default
 
 const CustomSlider = (props: any) => (
@@ -114,12 +116,14 @@ export default function Reader ({
   const fontList = useRef(null)
   const handleOpenFontStyle = () => {
     setSMenuStatus('font')
-    fontList.current.scrollToItem(fonts.indexOf(fontFamily))
+    fontList.current.scrollToItem(fonts.indexOf(fontFamily), 'center')
   }
 
   const navList = useRef(null)
   const handleOpenNavList = () => {
+    const { current } = navList
     setSMenuStatus('nav')
+    current.scrollToItem(pageNumber, 'center')
   }
 
   const handleJump = (href: string) => {
@@ -147,6 +151,26 @@ export default function Reader ({
     if (offset !== pageNumber) {
       handleJump(manifest[spine[offset]].href)
       setPageNumber(offset)
+    }
+  }
+
+  const handleClickNav = (e: React.MouseEvent) => {
+    let { target }: any = e
+    let href = target.getAttribute('data-href')
+
+    /** 处理事件目标 */
+    if (!href) {
+      target = target.parentElement
+      href = target.getAttribute('data-href')
+    }
+
+    if (href) {
+      const index = parseInt(target.getAttribute('data-index'))
+      if (index !== pageNumber) {
+        handleJump(href)
+        handleCloseSMenu()
+        setPageNumber(index)
+      }
     }
   }
 
@@ -242,7 +266,9 @@ export default function Reader ({
           >
             <span className="reader-tool-tips">上一章</span>
           </i>
-          <span className="reader-pnum">{ pageNumber + 1 }</span>
+          <span className="flex-box reader-pnum">
+            <Flipping value={ pageNumber + 1 }/>
+          </span>
           <i
             className={
               classNames(
@@ -409,6 +435,7 @@ export default function Reader ({
             { 'reader-nav-active': sMenuStatus === 'nav' }
           )
         }
+        onClick={ handleClickNav }
       >
         <AutoSizer>
           {
@@ -423,6 +450,7 @@ export default function Reader ({
                 {
                   ({index, style}) => {
                     const { id, navLabel, href, isSub } = bookInfo.nav[index]
+                    const pIndex = bookInfo.spine.indexOf(id)
                     return (
                       <div
                         style={ style }
@@ -430,10 +458,11 @@ export default function Reader ({
                           classNames(
                             'common-active reader-nav-label',
                             { 'reader-nav-sub': isSub },
-                            { 'reader-nav-label-active': false },
+                            { 'reader-nav-label-active': pIndex === pageNumber },
                           )
                         }
                         data-href={ href }
+                        data-index={ pIndex }
                         key={ index }
                         title={ navLabel }
                       >
