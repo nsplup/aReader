@@ -544,6 +544,15 @@ export default function Reader ({
             </button>
             <input type="text" className="s-m-input" spellCheck="false"/>
           </div>
+          <div
+            className={
+              classNames(
+                's-m-s-loading'
+              )
+            }
+          >
+            <div className="s-m-s-loading-slider"></div>
+          </div>
         </div>
       </div>
       <div

@@ -462,6 +462,37 @@ body, html, #root {
       }
     }
   }
+  &-s-loading {
+    @keyframes move {
+      0% {
+        left: 0;
+      }
+      70%, 100% {
+        left: 420px;
+      }
+    }
+
+    position: absolute;
+    left: 10px;
+    top: 40px;
+    width: 320px;
+    height: 35px;
+    overflow: hidden;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, .5);
+    &-slider {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+
+      width: 100px;
+      height: 5px;
+
+      transform: translate3d(-100%, 0, 0);
+      background-color: $primary-color-light;
+      animation: move 3s linear infinite;
+    }
+  }
   &-input {
     width: 260px;
     padding: 10px;
