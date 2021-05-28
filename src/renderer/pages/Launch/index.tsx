@@ -231,6 +231,7 @@ function Launch ({
         currentBookHash={ currentBook }
         library={ library }
         ipcRenderer={ ipcRenderer }
+        handleToast={ setMessage }
       />
       <div
         className="common-mask"
@@ -258,7 +259,7 @@ function Launch ({
           <p className="com-c-title">删除书籍</p>
         </div>
       </div>
-      <Toast msg={ message[0] } detail={ message[1] } />
+      <Toast msg={ message[0] } detail={ message[1] } handleReset={ setMessage } />
     </>
   )
 }

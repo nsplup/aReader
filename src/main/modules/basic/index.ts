@@ -100,21 +100,25 @@ function init () {
 
   /** 获取书籍内容 */
   ipcMain.on(READ_BOOK, (event: Electron.IpcMainEvent, { hash, href, format }) => {
-    if (format === 'EPUB') {
-      const resolvedPath = findFile(href, path.resolve('./data', hash))
-      
-      fs.readFile(resolvedPath[0], { encoding: 'utf-8' }, (err, data) => {
-        const start = data.indexOf('<body')
-        const end = data.indexOf('</body>')
-        const content = data.slice(start, end).replace(/<body\s*[^>]*>/, '')
-        event.reply(LOAD_BOOK, content)
-      })
-    } else {
-      const resolvedPath = findFile('.content', path.resolve('./data', hash))
-
-      fs.readFile(resolvedPath[0], { encoding: 'utf-8' }, (err, data) => {
-        event.reply(LOAD_BOOK, JSON.parse(data))
-      })
+    try {
+      if (format === 'EPUB') {
+        const resolvedPath = findFile(href, path.resolve('./data', hash))
+        
+        fs.readFile(resolvedPath[0], { encoding: 'utf-8' }, (err, data) => {
+          const start = data.indexOf('<body')
+          const end = data.indexOf('</body>')
+          const content = data.slice(start, end).replace(/<body\s*[^>]*>/, '')
+          event.reply(LOAD_BOOK, { content, status: 'sucess' })
+        })
+      } else {
+        const resolvedPath = findFile('.content', path.resolve('./data', hash))
+  
+        fs.readFile(resolvedPath[0], { encoding: 'utf-8' }, (err, data) => {
+          event.reply(LOAD_BOOK, { content: JSON.parse(data), status: 'sucess' })
+        })
+      }
+    } catch (err) {
+      event.reply(LOAD_BOOK, { content: null, status: 'fail' })
     }
   })
 }

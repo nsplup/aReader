@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react'
 
 import { classNames } from '@utils/classNames'
 
-export default function Toast ({ msg, detail, duration = 1000 * 2 }:
-  { msg: string, detail?: string, duration?: number }) {
+export default function Toast ({ msg, detail, duration = 1000 * 2, handleReset }:
+  { msg: string, detail?: string, duration?: number, handleReset: Function }) {
   const [message, setMessage] = useState(msg)
   const [isActive, setIsActive] = useState(false)
   const [btnStatus, setBtnStatus] = useState(false)
@@ -11,6 +11,8 @@ export default function Toast ({ msg, detail, duration = 1000 * 2 }:
   const toast = useRef<HTMLDivElement>(null)
 
   const reset = () => {
+    setMessage('')
+    handleReset([''])
     setIsActive(false)
     setBtnStatus(false)
   }
@@ -33,7 +35,7 @@ export default function Toast ({ msg, detail, duration = 1000 * 2 }:
   }
 
   useEffect(() => {
-    if (message !== msg) {
+    if (message !== msg && msg.length > 0) {
       setIsActive(true)
       setMessage(msg)
       timer.current = setTimeout(reset, duration)
@@ -66,7 +68,7 @@ export default function Toast ({ msg, detail, duration = 1000 * 2 }:
       onMouseLeave={ handleLeave }
       >
       <div className="c-toast-main" ref={ toast }>
-        { msg }
+        { message }
         {
           typeof detail === 'string'
             ? (

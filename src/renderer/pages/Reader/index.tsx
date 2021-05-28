@@ -64,6 +64,7 @@ interface Props {
   currentBookHash: string
   library: Library
   ipcRenderer: Electron.IpcRenderer
+  handleToast: Function
 }
 
 export default function Reader ({
@@ -74,6 +75,7 @@ export default function Reader ({
   currentBookHash,
   library,
   ipcRenderer,
+  handleToast,
 }: Props): JSX.Element {
   /** 样式属性 */
   const [renderMode, setRenderMode] = useState('page') /** 可选值：page/scroll */
@@ -258,10 +260,15 @@ export default function Reader ({
     /** 重置页面进度 */
     handleRestScroll()
     setRenderCount(0)
-  }, [currentBookHash])
+  }, [isReaderActive])
 
   useEffect(() => {
-    const loadBookListener = (event: Electron.IpcRendererEvent, content: any) => {
+    const loadBookListener = (event: Electron.IpcRendererEvent, { content, status }: any) => {
+      if (status === 'fail') {
+        handleToast(['缓存文件已丢失，请重新导入书籍。'])
+        handleCloseReader()
+        return
+      }
       if (bookInfo.format === 'TEXT') {
         setTextCache(content)
         content = content[bookInfo.manifest[bookInfo.spine[0]].href]
