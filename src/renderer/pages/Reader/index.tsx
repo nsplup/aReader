@@ -76,7 +76,7 @@ export default function Reader ({
   ipcRenderer,
 }: Props): JSX.Element {
   /** 样式属性 */
-  const [renderMode, setRenderMode] = useState('page')
+  const [renderMode, setRenderMode] = useState('page') /** 可选值：page/scroll */
 
   const [fontFamily, setFontFamily] = useState('微软雅黑')
   const [fontSize, setFontSize] = useState(18)
@@ -112,6 +112,62 @@ export default function Reader ({
     /** to-do: 取消全屏 */
   }
 
+  const contentEl = useRef<HTMLDivElement>(null)
+  const renderEl = useRef<HTMLDivElement>(null)
+  const handleRestScroll = () => {
+    contentEl.current.scrollTo(0, 0)
+  }
+  const [renderCount, setRenderCount] = useState(0)
+  const [progress, setProgress] = useState(0)
+  const computTotalRenderCount = () => {
+    const { current } = renderEl
+    const { offsetWidth } = contentEl.current
+    const { scrollWidth } = current
+
+    return Math.ceil((scrollWidth - offsetWidth) / offsetWidth)
+  }
+  const handleWheel = (e: React.WheelEvent) => {
+    const { deltaY } = e
+    if (renderMode === 'page') {
+      const totalCount = computTotalRenderCount()
+      const computedCount = Math.max(
+        0,
+        Math.min(
+          deltaY > 0
+            ? renderCount + 1
+            : renderCount - 1,
+          totalCount
+        )
+      )
+      setRenderCount(computedCount)
+      setProgress(computedCount / totalCount)
+    }
+  }
+  const handleScroll = () => {
+    if (renderMode === 'scroll') {
+      const { current } = contentEl
+      const { scrollHeight, scrollTop, offsetHeight } = current
+      const computedHeight = scrollHeight - offsetHeight
+  
+      setProgress(scrollTop / computedHeight)
+      setRenderCount(Math.floor(computedHeight / scrollTop))
+    }
+  }
+  const handleToggleRenderMode = () => {
+    if (renderMode === 'scroll') {
+      setRenderMode('page')
+    } else {
+      setRenderMode('scroll')
+    }
+    setRenderCount(0)
+    handleRestScroll()
+  }
+  const handleResize = () => {
+    if (renderMode === 'page') {
+      setRenderCount(Math.floor(progress * computTotalRenderCount()))
+    }
+  }
+
   /** 打开字体样式窗口事件 */
   const fontList = useRef(null)
   const handleOpenFontStyle = () => {
@@ -138,6 +194,9 @@ export default function Reader ({
         format,
       })
     }
+    /** 重置页面进度 */
+    handleRestScroll()
+    setRenderCount(0)
   }
 
   const handleChangePage = (offset: number) => {
@@ -175,6 +234,14 @@ export default function Reader ({
   }
 
   useEffect(() => {
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [progress])
+
+  useEffect(() => {
     if (currentBookHash && typeof currentBookHash === 'string') {
       const book = library.categories[0].books.filter(({ hash }) => hash === currentBookHash)[0]
       setBookInfo(book)
@@ -189,6 +256,9 @@ export default function Reader ({
     } else {
       isReaderActive && handleCloseReader()
     }
+    /** 重置页面进度 */
+    handleRestScroll()
+    setRenderCount(0)
   }, [currentBookHash])
 
   useEffect(() => {
@@ -218,11 +288,25 @@ export default function Reader ({
       <div
         className={
           classNames(
-            'reader-content'
+            'reader-content',
+            renderMode === 'scroll'
+              ? 'reader-content-scroll'
+              : 'reader-content-page'
           )
         }
+        ref={ contentEl }
+        onWheel={ handleWheel }
+        onScroll={ handleScroll }
       >
-        <div dangerouslySetInnerHTML={{ __html: content }}></div>
+        <div
+          dangerouslySetInnerHTML={{ __html: content }}
+          ref={ renderEl }
+          style={{
+            transform: renderCount > 0 && renderMode === 'page'
+              ? `translate3d(calc(-${renderCount * 100}% - ${ renderCount * 100 }px), 0, 0)`
+              : ''
+          }}
+        ></div>
       </div>
       <div className="flex-box reader-toolbar">
         <div
@@ -239,9 +323,20 @@ export default function Reader ({
           <i className="reader-tool common-active ri-bookmark-line">
             <span className="reader-tool-tips">插入书签</span>
           </i>
-          <i className="reader-tool common-active ri-file-paper-2-line">
-            <span className="reader-tool-tips">滚动模式</span>
-            {/* <span className="reader-tool-tips">分页模式</span> */}
+          <i
+            className={
+              classNames(
+                'reader-tool common-active ri-file-paper-2-line',
+                { 'reader-tool-enabled': renderMode === 'scroll' }
+              )
+            }
+            onClick={ handleToggleRenderMode }
+          >
+            {
+              renderMode === 'scroll'
+              ? (<span className="reader-tool-tips">分页模式</span>)
+              : (<span className="reader-tool-tips">滚动模式</span>)
+            }
           </i>
           <i className="reader-tool common-active ri-list-unordered" onClick={ handleOpenNavList }>
             <span className="reader-tool-tips">目录</span>
