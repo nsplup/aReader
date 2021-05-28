@@ -143,7 +143,7 @@ export default function Reader ({
   const handleChangePage = (offset: number) => {
     const { spine, manifest } = bookInfo
     offset = Math.min(
-      spine.length,
+      spine.length - 1,
       Math.max(0, offset + pageNumber)
     )
 
