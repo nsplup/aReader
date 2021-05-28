@@ -21,6 +21,13 @@ import { findFile } from '@utils/findFile'
 //   console.log(message.result)
 // })
 
+// const searchProcess = new Worker('./searchProcess.js')
+// searchProcess.postMessage({ bookInfo, keyword: (process.argv.slice(2)[1] || '') })
+
+// searchProcess.on('message', (message) => {
+//   console.log(message.result, message.result.length)
+// })
+
 function init () {
   /** 在目录生成data文件夹 */
   fs.mkdir('./data', (err) => { if (err) { console.log(err) }})

@@ -150,7 +150,6 @@ export default function Reader ({
       const computedHeight = scrollHeight - offsetHeight
   
       setProgress(scrollTop / computedHeight)
-      setRenderCount(Math.floor(computedHeight / scrollTop))
     }
   }
   const handleToggleRenderMode = () => {
