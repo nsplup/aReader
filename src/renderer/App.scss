@@ -292,6 +292,15 @@ body, html, #root {
     opacity: .5;
     visibility: hidden;
   }
+  &-disabled {
+    color: rgba(50, 50, 50, .1);
+    background-color: unset !important;
+    transform: unset !important;
+
+    & .reader-tool-tips {
+      visibility: hidden !important;
+    }
+  }
 }
 
 .reader-pnum {

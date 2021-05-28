@@ -97,6 +97,7 @@ export default function Reader ({
     spine: [],
     bookmark: { default: [], detail: [] }
   })
+  const [pageNumber, setPageNumber] = useState(0)
   /** 书籍内容 */
   const [content, setContent] = useState('')
   const [textCache, setTextCache] = useState(null)
@@ -121,10 +122,39 @@ export default function Reader ({
     setSMenuStatus('nav')
   }
 
+  const handleJump = (href: string) => {
+    const { hash, format } = bookInfo
+    /** 当格式未TEXT并存在缓存时从缓存获取书籍内容 */
+    if (format === 'TEXT' && textCache) {
+      setContent(textCache[href])
+    } else {
+      ipcRenderer.send(READ_BOOK, {
+        hash: currentBookHash,
+        href,
+        format,
+      })
+    }
+  }
+
+  const handleChangePage = (offset: number) => {
+    const { spine, manifest } = bookInfo
+    offset = Math.min(
+      spine.length,
+      Math.max(0, offset + pageNumber)
+    )
+
+    /** 处理边界情况 */
+    if (offset !== pageNumber) {
+      handleJump(manifest[spine[offset]].href)
+      setPageNumber(offset)
+    }
+  }
+
   useEffect(() => {
     if (currentBookHash && typeof currentBookHash === 'string') {
       const book = library.categories[0].books.filter(({ hash }) => hash === currentBookHash)[0]
       setBookInfo(book)
+      setTextCache(null)
       const { spine, manifest, format } = book
     
       ipcRenderer.send(READ_BOOK, {
@@ -201,11 +231,27 @@ export default function Reader ({
           <i className="reader-tool common-active ri-search-line" onClick={() => setSMenuStatus('search')}>
             <span className="reader-tool-tips">全文检索</span>
           </i>
-          <i className="reader-tool common-active ri-skip-back-fill">
+          <i
+            className={
+              classNames(
+                'reader-tool common-active ri-skip-back-fill',
+                { 'reader-tool-disabled': pageNumber === 0 },
+              )
+            }
+            onClick={() => handleChangePage(-1)}
+          >
             <span className="reader-tool-tips">上一章</span>
           </i>
-          <span className="reader-pnum">9999</span>
-          <i className="reader-tool common-active ri-skip-forward-fill">
+          <span className="reader-pnum">{ pageNumber + 1 }</span>
+          <i
+            className={
+              classNames(
+                'reader-tool common-active ri-skip-forward-fill',
+                { 'reader-tool-disabled': pageNumber === (bookInfo.spine.length - 1) },
+              )
+            }
+            onClick={() => handleChangePage(1)}
+          >
             <span className="reader-tool-tips">下一章</span>
           </i>
           <i className="reader-tool common-active ri-fullscreen-line">
