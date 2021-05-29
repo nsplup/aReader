@@ -102,6 +102,7 @@ export default function Reader ({
     bookmark: { default: [], detail: [] }
   })
   const [pageNumber, setPageNumber] = useState(0)
+  const [navMenuStatus, setNavMenuStatus] = useState(true)
   /** 书籍内容 */
   const [content, setContent] = useState('')
   const [textCache, setTextCache] = useState(null)
@@ -569,46 +570,91 @@ export default function Reader ({
             { 'reader-nav-active': sMenuStatus === 'nav' }
           )
         }
-        onClick={ handleClickNav }
       >
-        <AutoSizer>
-          {
-            ({ width, height }) => (
-              <FixedSizeList
-                width={ width }
-                height={ height }
-                itemCount={ bookInfo.nav.length }
-                itemSize={ 55 }
-                ref={ navList }
-              >
-                {
-                  ({index, style}) => {
-                    const { id, navLabel, href, isSub } = bookInfo.nav[index]
-                    const pIndex = bookInfo.spine.indexOf(id)
-                    return (
-                      <div
-                        style={ style }
-                        className={
-                          classNames(
-                            'common-active reader-nav-label',
-                            { 'reader-nav-sub': isSub },
-                            { 'reader-nav-label-active': pIndex === pageNumber },
-                          )
-                        }
-                        data-href={ href }
-                        data-index={ pIndex }
-                        key={ index }
-                        title={ navLabel }
-                      >
-                        <p>{ navLabel }</p>
-                      </div>
-                    )
+        <div className="flex-box reader-nav-menu">
+          <span
+            className={
+              classNames(
+                'common-active',
+                { 'reader-nav-m-active': navMenuStatus }
+              )
+            }
+            onClick={ () => setNavMenuStatus(true) }
+          >
+            目录
+          </span>
+          <span
+            className={
+              classNames(
+                'common-active',
+                { 'reader-nav-m-active': !navMenuStatus }
+              )
+            }
+            onClick={ () => setNavMenuStatus(false) }
+          >
+            书签
+          </span>
+        </div>
+        <div
+          style={{
+            height: '100%',
+            transform: navMenuStatus
+              ? 'translate3d(0, 0, 0)'
+              : 'translate3d(-100%, 0, 0)',
+            transition: 'transform .3s ease-out'
+          }}
+          onClick={ handleClickNav }
+        >
+          <AutoSizer>
+            {
+              ({ width, height }) => (
+                <FixedSizeList
+                  width={ width }
+                  height={ height }
+                  itemCount={ bookInfo.nav.length }
+                  itemSize={ 55 }
+                  ref={ navList }
+                >
+                  {
+                    ({index, style}) => {
+                      const { id, navLabel, href, isSub } = bookInfo.nav[index]
+                      const pIndex = bookInfo.spine.indexOf(id)
+                      return (
+                        <div
+                          style={ style }
+                          className={
+                            classNames(
+                              'common-active reader-nav-label',
+                              { 'reader-nav-sub': isSub },
+                              { 'reader-nav-label-active': pIndex === pageNumber },
+                            )
+                          }
+                          data-href={ href }
+                          data-index={ pIndex }
+                          key={ index }
+                          title={ navLabel }
+                        >
+                          <p>{ navLabel }</p>
+                        </div>
+                      )
+                    }
                   }
-                }
-              </FixedSizeList>
-            )
-          }
-        </AutoSizer>
+                </FixedSizeList>
+              )
+            }
+          </AutoSizer>
+        </div>
+        <div
+          style={{
+            height: '100%',
+            transform: !navMenuStatus
+              ? 'translate3d(0, 0, 0)'
+              : 'translate3d(100%, 0, 0)',
+            transition: 'transform .3s ease-out'
+          }}
+        >
+
+        </div>
       </div>
     </div>
   )

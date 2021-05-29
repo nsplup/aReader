@@ -486,7 +486,7 @@ body, html, #root {
       left: 0;
 
       width: 100px;
-      height: 5px;
+      height: 4px;
 
       transform: translate3d(-100%, 0, 0);
       background-color: $primary-color-light;
@@ -514,8 +514,10 @@ body, html, #root {
   z-index: 999;
   width: 350px;
   height: 100%;
+  overflow: hidden;
   user-select: none;
   padding: 20px 0;
+  padding-top: 60px;
   background: $primary-color-pale;
   box-sizing: border-box;
   opacity: 0;
@@ -574,6 +576,42 @@ body, html, #root {
   &-active {
     transform: translate3d(0, 0, 0);
     opacity: 1;
+  }
+  &-menu {
+    justify-content: space-around;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+
+    & > span {
+      position: relative;
+      overflow: hidden;
+      padding: 10px 30px;
+      border-radius: 10px;
+      color: #909090;
+      font-weight: bold;
+
+      &:hover {
+        background-color: rgba(50, 50, 50, .1);
+      }
+    }
+  }
+  &-m-active {
+    color: $primary-color !important;
+    &::after {
+      display: block;
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 50px;
+      height: 3px;
+      margin: 0 auto;
+      background-color: $primary-color;
+      content: '';
+    }
   }
 }
 
