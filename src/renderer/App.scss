@@ -188,7 +188,7 @@ body, html, #root {
   height: 100%;
   z-index: -1;
 
-  transform: scale(.7) translate3d(0, 100px, 0);
+  transform: scale(0);
   opacity: 0;
   transition: all .3s;
 
@@ -196,7 +196,7 @@ body, html, #root {
 
   &-active {
     z-index: 999;
-    transform: scale(1) translate3d(0, 0, 0);
+    transform: scale(1);
     opacity: 1;
   }
 }
@@ -213,18 +213,6 @@ body, html, #root {
     width: 100%;
     height: 100%;
     white-space: pre-wrap;
-  }
-  & * {
-    margin: 0 !important;
-    padding: 0 !important;
-
-    cursor: unset !important;
-    color: inherit !important;
-    text-decoration: unset !important;
-  }
-  & li, & ol {
-    display: table;
-    list-style: none;
   }
 
   &-scroll {

@@ -146,7 +146,7 @@ export default function Reader ({
     const { offsetWidth } = contentEl.current
     const { scrollWidth } = current
 
-    return Math.ceil((scrollWidth - offsetWidth) / offsetWidth)
+    return Math.ceil((scrollWidth - offsetWidth) / (offsetWidth + 140))
   }
   const handleWheel = (e: React.WheelEvent) => {
     const { deltaY } = e
@@ -237,8 +237,9 @@ export default function Reader ({
     if (renderMode === 'page') {
       setRenderCount(Math.floor(prog * computTotalRenderCount()))
     } else {
-      const { scrollHeight } = contentEl.current
-      contentEl.current.scrollTo({ left: 0, top: scrollHeight * prog })
+      const { scrollHeight, offsetHeight } = contentEl.current
+      const computedHeight = scrollHeight - offsetHeight
+      contentEl.current.scrollTo({ left: 0, top: computedHeight * prog })
     }
     setProgress(prog)
   }
@@ -318,7 +319,6 @@ export default function Reader ({
     if (typeof library === 'object' && currentBookHash.length > 0 && isReaderActive) {
       const bookData = Object.assign({}, defaultInfo, library.data[currentBookHash])
       setBookInfo(bookData)
-      setTextCache(null)
       const { bookmark, spine, manifest } = bookData
   
       if (bookmark.history.length === 2) {
@@ -331,14 +331,13 @@ export default function Reader ({
         handleJump(href)
       }
     }
+    setTextCache(null)
   }, [isReaderActive])
 
   useEffect(() => {
     /** 构建映射表 */
     navMap.current = {}
     bookInfo.nav.forEach(({ id, navLabel }) => { navMap.current[id] = navLabel })
-
-    /** 更新Library */
 
     const loadBookListener = (event: Electron.IpcRendererEvent, {
       content, status, href, progress, format
@@ -366,21 +365,6 @@ export default function Reader ({
       ipcRenderer.off(LOAD_BOOK, loadBookListener)
     }
   }, [bookInfo])
-
-  /** A标签点击事件代理 */
-  useEffect(() => {
-    const { current } = contentEl
-    const handleClickProxy = (e: MouseEvent) => {
-      e.stopPropagation()
-      e.preventDefault()
-    }
-
-    current.addEventListener('click', handleClickProxy, { passive: false })
-
-    return () => {
-      current.removeEventListener('click', handleClickProxy)
-    }
-  }, [])
 
   return (
     <div

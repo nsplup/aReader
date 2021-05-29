@@ -126,7 +126,15 @@ function init () {
         fs.readFile(resolvedPath[0], { encoding: 'utf-8' }, (err, data) => {
           const start = data.indexOf('<body')
           const end = data.indexOf('</body>')
-          const content = data.slice(start, end).replace(/<body\s*[^>]*>/, '')
+          const content = data.slice(start, end)
+            /** 去除标签 */
+            .replace(/<\/?[^>]+>/g, fragment => {
+              return /^<\/?(ruby|rtc?|rp|rb)/.test(fragment)
+                ? fragment
+                : ''
+            })
+            /** 去除空白行 */
+            .replace(/[\r\n]+/g, '\n')
           event.reply(LOAD_BOOK, { content, status: 'sucess', href, format, progress })
         })
       } else {
