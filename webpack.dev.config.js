@@ -40,5 +40,11 @@ module.exports = [
     entry: {
       loadProcess: './src/main/modules/load/index.js'
     },
+  }),
+  merge(base, {
+    target: 'node',
+    entry: {
+      searchProcess: './src/main/modules/search/index.js'
+    },
   })
 ]

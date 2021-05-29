@@ -47,13 +47,7 @@ function loadTEXT (filePath, res, rej) {
         }
         /** 缓存文件是否丢失 */
         if (files.includes('.infomation')) {
-          fs.readFile(
-            path.resolve(bookPath, '.infomation'),
-            { encoding: 'utf8' },
-            (err, data) => {
-              res([hash, JSON.parse(data)])
-            }
-          )
+          res([filePath, true]) /** 格式：路径，是否已存在 */
         } else {
           try {
             const file = fs.readFileSync(path.resolve(filePath))
@@ -141,13 +135,15 @@ function loadTEXT (filePath, res, rej) {
                   return
                 }
 
-                res([hash, infomation])
 
                 /** 保存缓存文件 */
                 fs.writeFile(
                   path.resolve(bookPath, '.infomation'),
                   JSON.stringify(infomation),
-                  (err) => { if (err) { rej([filePath, '.infomation 文件保存失败']) } }
+                  (err) => {
+                    if (err) { rej([filePath, '.infomation 文件保存失败']) }
+                    res([filePath, hash])
+                  }
                 )
               }
             )
