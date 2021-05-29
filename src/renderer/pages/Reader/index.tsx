@@ -124,17 +124,23 @@ export default function Reader ({
     setPageNumber(0)
     /** to-do: 取消全屏 */
   }
+  const [bookmarkCaller, setBookmarkCaller] = useState(0)
   const handleBookmark = (isRemoveEvent: boolean) => {
-    const { bookmark } = bookInfo
+    let { bookmark } = bookInfo
 
     if (isRemoveEvent) {
       bookmark.detail = bookmark.detail.filter(([spine, prog]) => 
         !(spine === pageNumber && (Math.abs((prog * 100) - (progress * 100)) < 3))
       )
     } else {
-      bookmark.detail.push([pageNumber, progress])
+      bookmark.detail = bookmark.detail.concat([[pageNumber, progress]])
     }
+    bookmark = Object.assign({}, bookmark, {
+      detail: [...bookmark.detail]
+    })
+    console.log(bookmark)
     setBookInfo(bookInfo => Object.assign({}, bookInfo, { bookmark }))
+    setBookmarkCaller(Date.now())
   }
 
   const contentEl = useRef<HTMLDivElement>(null)
@@ -303,11 +309,17 @@ export default function Reader ({
 
   /** 历史记录、书签保存及上传 */
   useEffect(() => {
-    const { bookmark } = bookInfo
-    bookmark.history = [pageNumber, progress]
-
-    setBookInfo(bookInfo => Object.assign({}, bookInfo, { bookmark }))
-  }, [progress, pageNumber])
+    if (typeof library === 'object' && isReaderActive) {
+      let { bookmark, hash } = bookInfo
+      bookmark = Object.assign({}, bookmark, {
+        history: [pageNumber, progress]
+      })
+      const { data } = library
+  
+      data[hash] = Object.assign({}, bookInfo, { bookmark })
+      handleChangeLibrary(Object.assign({}, library, { data }))
+    }
+  }, [progress, pageNumber, bookmarkCaller])
 
   /** page模式下窗口变换事件处理 */
   useEffect(() => {
@@ -324,13 +336,15 @@ export default function Reader ({
       setBookInfo(bookData)
       const { bookmark, spine, manifest } = bookData
       if (bookmark.history.length === 2) {
-        const [pageNumber, progress] = bookmark.history
-        const { href } = manifest[spine[pageNumber]]
+        const [pnum, prog] = bookmark.history
+        const { href } = manifest[spine[pnum]]
   
-        handleJump(href, progress)
+        handleJump(href, prog)
+        setPageNumber(pnum)
       } else {
         const { href } = manifest[spine[0]]
         handleJump(href)
+        setPageNumber(0)
       }
     }
   }, [isReaderActive])

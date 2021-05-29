@@ -17,8 +17,8 @@ import Placeholder from './Placeholder'
 import Toast from './Toast'
 import {
   generateFonts,
-  updataLibrary,
-  updataUserConfig,
+  updateLibrary,
+  updateUserConfig,
 } from '@renderer/actions'
 import { classNames } from '@utils/classNames'
 import { toCSSText } from '@utils/toCSSText'
@@ -31,8 +31,8 @@ interface Props {
   library: Library
   userconfig: UserConfig
   generateFonts: (fonts: Array<string>) => any
-  updataLibrary: (library: Library) => any
-  updataUserConfig: (userconfig: UserConfig) => any
+  updateLibrary: (library: Library) => any
+  updateUserConfig: (userconfig: UserConfig) => any
 }
 
 
@@ -41,8 +41,8 @@ function Launch ({
   library,
   userconfig,
   generateFonts,
-  updataLibrary,
-  updataUserConfig,
+  updateLibrary,
+  updateUserConfig,
 }: Props): JSX.Element {
   /** 打开文件选择器事件 */
   const handleOpenDialog = () => ipcRenderer.send(OPEN_DIALOG)
@@ -93,11 +93,11 @@ function Launch ({
     }
     /** 主线程请求书架数据事件 */
     const libraryListener = (event: Electron.IpcRendererEvent, library: Library) => {
-      updataLibrary(library)
+      updateLibrary(library)
     }
     /** 主线程请求用户数据事件 */
     const userconfigListener = (event: Electron.IpcRendererEvent, userconfig: UserConfig) => {
-      updataUserConfig(userconfig)
+      updateUserConfig(userconfig)
     }
     ipcRenderer.on(FONTS_READY, fontsListener)
     ipcRenderer.on(LOAD_LIBRARY, libraryListener)
@@ -231,7 +231,7 @@ function Launch ({
         library={ library }
         ipcRenderer={ ipcRenderer }
         handleToast={ setMessage }
-        handleChangeLibrary={ updataLibrary }
+        handleChangeLibrary={ updateLibrary }
       />
       <div
         className="common-mask"
@@ -267,8 +267,8 @@ function Launch ({
 const mapStateToProps = ({ fonts, library, userconfig }: any) => ({ fonts, library, userconfig })
 const mapDispatchToProps = (dispatch: any) => ({
   generateFonts: (fonts: Array<string>) => dispatch(generateFonts(fonts)),
-  updataLibrary: (library: Library) => dispatch(updataLibrary(library)),
-  updataUserConfig: (userconfig: UserConfig) => dispatch(updataUserConfig(userconfig))
+  updateLibrary: (library: Library) => dispatch(updateLibrary(library)),
+  updateUserConfig: (userconfig: UserConfig) => dispatch(updateUserConfig(userconfig))
 })
 const connectedLaunch = connect(mapStateToProps, mapDispatchToProps)(Launch)
 

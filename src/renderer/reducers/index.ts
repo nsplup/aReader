@@ -1,7 +1,7 @@
 import {
   GENERATE_FONTS,
-  UPDATA_LIBRARY,
-  UPDATA_USERCONFIG,
+  UPDATE_LIBRARY,
+  UPDATE_USERCONFIG,
 } from '../constants'
 
 interface State {
@@ -26,10 +26,10 @@ export default function rootReducer (state = initialState, action: Action): Stat
     [GENERATE_FONTS] () {
       return Object.assign({}, state, action.payload)
     },
-    [UPDATA_LIBRARY] () {
+    [UPDATE_LIBRARY] () {
       return Object.assign({}, state, action.payload)
     },
-    [UPDATA_USERCONFIG] () {
+    [UPDATE_USERCONFIG] () {
       return Object.assign({}, state, action.payload)
     },
   }

@@ -1,23 +1,23 @@
 import {
   GENERATE_FONTS,
-  UPDATA_LIBRARY,
-  UPDATA_USERCONFIG,
+  UPDATE_LIBRARY,
+  UPDATE_USERCONFIG,
 } from '../constants'
 
 function generateFonts (fonts: Array<string>) {
   return { type: GENERATE_FONTS, payload: { fonts } }
 }
 
-function updataLibrary (library: Library) {
-  return { type: UPDATA_LIBRARY, payload: { library } }
+function updateLibrary (library: Library) {
+  return { type: UPDATE_LIBRARY, payload: { library } }
 }
 
-function updataUserConfig (userconfig: UserConfig) {
-  return { type: UPDATA_USERCONFIG, payload: { userconfig } }
+function updateUserConfig (userconfig: UserConfig) {
+  return { type: UPDATE_USERCONFIG, payload: { userconfig } }
 }
 
 export {
   generateFonts,
-  updataLibrary,
-  updataUserConfig,
+  updateLibrary,
+  updateUserConfig,
 }

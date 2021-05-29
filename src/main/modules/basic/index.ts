@@ -128,6 +128,7 @@ function init () {
           const end = data.indexOf('</body>')
           const content = data.slice(start, end)
             /** 去除标签 */
+            .replace(/<script\b[^>]*>[\s\S]*<\/script>/g, '')
             .replace(/<\/?[^>]+>/g, fragment => {
               return /^<\/?(ruby|rtc?|rp|rb)/.test(fragment)
                 ? fragment
