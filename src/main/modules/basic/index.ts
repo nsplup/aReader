@@ -99,7 +99,7 @@ function init () {
   })
 
   /** 获取书籍内容 */
-  ipcMain.on(READ_BOOK, (event: Electron.IpcMainEvent, { hash, href, format }) => {
+  ipcMain.on(READ_BOOK, (event: Electron.IpcMainEvent, { hash, href, format, ...other }) => {
     try {
       if (format === 'EPUB') {
         const resolvedPath = findFile(href, path.resolve('./data', hash))
@@ -108,17 +108,17 @@ function init () {
           const start = data.indexOf('<body')
           const end = data.indexOf('</body>')
           const content = data.slice(start, end).replace(/<body\s*[^>]*>/, '')
-          event.reply(LOAD_BOOK, { content, status: 'sucess' })
+          event.reply(LOAD_BOOK, { content, status: 'sucess', ...other })
         })
       } else {
         const resolvedPath = findFile('.content', path.resolve('./data', hash))
   
         fs.readFile(resolvedPath[0], { encoding: 'utf-8' }, (err, data) => {
-          event.reply(LOAD_BOOK, { content: JSON.parse(data), status: 'sucess' })
+          event.reply(LOAD_BOOK, { content: JSON.parse(data), status: 'sucess', ...other })
         })
       }
     } catch (err) {
-      event.reply(LOAD_BOOK, { content: null, status: 'fail' })
+      event.reply(LOAD_BOOK, { content: null, status: 'fail', ...other })
     }
   })
 }

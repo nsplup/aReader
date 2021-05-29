@@ -615,6 +615,49 @@ body, html, #root {
   }
 }
 
+.reader-bookmark {
+  position: relative;
+  width: calc(100% - 40px);
+  overflow: hidden;
+  margin: 0 auto;
+  padding: 20px;
+  padding-left: 40px;
+  padding-right: 50px;
+
+  border-radius: 10px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+
+  &:hover {
+    background-color: rgba(50, 50, 50, .1);
+  }
+  &::after {
+    display: block;
+    position: absolute;
+    left: 14px;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 7.5px 10px 7.5px;
+    border-color: transparent transparent rgba(50, 50, 50, .3) transparent;
+    
+    content: '';
+  }
+  &-prog {
+    position: absolute;
+    right: 14px;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    height: 17px;
+    color: $common-text-description;
+  }
+}
+
 .com {
   &-slider {
     $color: #ae08b5;
