@@ -119,6 +119,9 @@ export default function Reader ({
 
   const handleCloseReader = () => {
     handleClose(false)
+    setBookInfo(Object.assign({}, defaultInfo))
+    setTextCache(null)
+    setPageNumber(0)
     /** to-do: 取消全屏 */
   }
   const handleBookmark = (isRemoveEvent: boolean) => {
@@ -296,9 +299,9 @@ export default function Reader ({
       const bookData = Object.assign({}, defaultInfo, library.data[currentBookHash])
       setBookInfo(bookData)
     }
-  }, [library, currentBookHash])
+  }, [library, currentBookHash, isReaderActive])
 
-  /** 历史记录保存 */
+  /** 历史记录、书签保存及上传 */
   useEffect(() => {
     const { bookmark } = bookInfo
     bookmark.history = [pageNumber, progress]
@@ -320,7 +323,6 @@ export default function Reader ({
       const bookData = Object.assign({}, defaultInfo, library.data[currentBookHash])
       setBookInfo(bookData)
       const { bookmark, spine, manifest } = bookData
-  
       if (bookmark.history.length === 2) {
         const [pageNumber, progress] = bookmark.history
         const { href } = manifest[spine[pageNumber]]
@@ -331,7 +333,6 @@ export default function Reader ({
         handleJump(href)
       }
     }
-    setTextCache(null)
   }, [isReaderActive])
 
   useEffect(() => {
