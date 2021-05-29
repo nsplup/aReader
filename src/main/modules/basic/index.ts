@@ -13,6 +13,7 @@ import fs from 'fs'
 import path from 'path'
 import { Worker } from 'worker_threads'
 import { findFile } from '@utils/findFile'
+import { _Promise } from '@utils/promise-extends'
 
 // const loadProcess = new Worker('./loadProcess.js')
 // loadProcess.postMessage({ paths: process.argv.slice(2) })
@@ -54,21 +55,39 @@ function init () {
           let library: Library
           if (err) {
             library = {
-              history: [],
-              categories: [
-                {
-                  name: '默认',
-                  books: [],
-                }
-              ]
+              shelf: [],
+              data: {}
             }
             fs.writeFile('./data/.library', JSON.stringify(library), (err) => {
               if (err) { console.log(err) }
             })
+            event.reply(LOAD_LIBRARY, library)
           } else {
             library = JSON.parse(data)
+            const tasks: any = []
+
+            library.shelf.forEach(hash => {
+              tasks.push(new Promise((res, rej) => {
+                fs.readFile(path.resolve('./data', hash, '.infomation'), { encoding: 'utf-8' }, (err, data) => {
+                  if (err) {
+                    rej(err)
+                  } else {
+                    res(JSON.parse(data))
+                  }
+                })
+              }))
+            })
+            _Promise
+              .finish(tasks)
+              .then(({ resolve }) => {
+                resolve.forEach((infomation: Infomation) => {
+                  const { hash } = infomation
+                  
+                  library.data[hash] = Object.assign({}, library.data[hash], infomation)
+                })
+                event.reply(LOAD_LIBRARY, library)
+              })
           }
-          event.reply(LOAD_LIBRARY, library)
         })
         /** 读取.userconfig如果不存在则创建 */
         fs.readFile('./data/.userconfig', { encoding: 'utf-8' }, (err, data) => {
@@ -99,26 +118,26 @@ function init () {
   })
 
   /** 获取书籍内容 */
-  ipcMain.on(READ_BOOK, (event: Electron.IpcMainEvent, { hash, href, format, ...other }) => {
+  ipcMain.on(READ_BOOK, (event: Electron.IpcMainEvent, { hash, href, format, progress }) => {
     try {
       if (format === 'EPUB') {
-        const resolvedPath = findFile(href, path.resolve('./data', hash))
+        const resolvedPath = findFile(path.basename(href), path.resolve('./data', hash))
         
         fs.readFile(resolvedPath[0], { encoding: 'utf-8' }, (err, data) => {
           const start = data.indexOf('<body')
           const end = data.indexOf('</body>')
           const content = data.slice(start, end).replace(/<body\s*[^>]*>/, '')
-          event.reply(LOAD_BOOK, { content, status: 'sucess', ...other })
+          event.reply(LOAD_BOOK, { content, status: 'sucess', href, format, progress })
         })
       } else {
         const resolvedPath = findFile('.content', path.resolve('./data', hash))
   
         fs.readFile(resolvedPath[0], { encoding: 'utf-8' }, (err, data) => {
-          event.reply(LOAD_BOOK, { content: JSON.parse(data), status: 'sucess', ...other })
+          event.reply(LOAD_BOOK, { content: JSON.parse(data), status: 'sucess', href, format, progress })
         })
       }
     } catch (err) {
-      event.reply(LOAD_BOOK, { content: null, status: 'fail', ...other })
+      event.reply(LOAD_BOOK, { content: null, status: 'fail', href, format, progress })
     }
   })
 }

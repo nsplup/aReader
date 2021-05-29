@@ -18,7 +18,7 @@ export default function Book ({ hash, cover, title, format, progress }: CInfomat
       <div className="flex-box book-cover">
         {
           cover
-            ? (<img src="" draggable="false"/>)
+            ? (<img src={ cover } width="100%" draggable="false"/>)
             : (<img src={ placeholder } width="80" draggable="false"/>)
         }
       </div>

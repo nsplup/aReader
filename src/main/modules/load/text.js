@@ -142,7 +142,7 @@ function loadTEXT (filePath, res, rej) {
                   JSON.stringify(infomation),
                   (err) => {
                     if (err) { rej([filePath, '.infomation 文件保存失败']) }
-                    res([filePath, hash])
+                    res([filePath, hash, infomation])
                   }
                 )
               }

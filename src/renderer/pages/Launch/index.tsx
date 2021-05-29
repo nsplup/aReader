@@ -149,7 +149,7 @@ function Launch ({
           <i className="ri-file-add-line"></i>
           导入书籍
         </button>
-        <section
+        {/* <section
           className="launch-library"
           style={{
             display: library && library.history.length > 0 ? '' : 'none'
@@ -159,11 +159,11 @@ function Launch ({
           <div className="launch-content fix">
 
           </div>
-        </section>
+        </section> */}
         <section
           className="launch-library"
           style={{
-            display: taskCount > 0 || (library && library.categories[0].books.length > 0) ? '' : 'none'
+            display: taskCount > 0 || (library && library.shelf.length > 0) ? '' : 'none'
           }}
         >
           <header className="launch-title">书架</header>
@@ -172,8 +172,8 @@ function Launch ({
               Array.from(Array(taskCount), (_, i) => (<Placeholder key={ i } />))
             }
             {
-              library && library.categories[0].books.map((infomation, index) => {
-                const { hash, title, cover, format } = infomation
+              library && library.shelf.map((sha256, index) => {
+                const { hash, title, cover, format } = library.data[sha256]
                 return (<Book
                   hash={ hash }
                   title={ title }
@@ -191,8 +191,7 @@ function Launch ({
           className="flex-box"
           style={{
             display: taskCount > 0 
-              || (library && library.history.length > 0)
-              || (library && library.categories[0].books.length > 0)
+              || (library && library.shelf.length > 0)
                 ? 'none'
                 : '',
             position: 'absolute',
@@ -251,10 +250,10 @@ function Launch ({
           )
         }
       >
-        <div className="flex-box com-c-item common-active">
+        {/* <div className="flex-box com-c-item common-active">
           <i className="ri-heart-line"></i>
           <p className="com-c-title">加入书架</p>
-        </div>
+        </div> */}
         <div className="flex-box com-c-item common-active">
           <i className="ri-delete-bin-line"></i>
           <p className="com-c-title">删除书籍</p>

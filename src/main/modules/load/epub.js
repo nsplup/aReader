@@ -65,14 +65,17 @@ function loadEPUB (filePath, res, rej) {
                     ? metadata['dc:title']
                     : filename
                   /** 获取manifest */
+                  const manifestMap = {}
                   if (manifest && manifest.item) {
                     let temp = {}
                     for (let i = 0, len = manifest.item.length; i < len; i++) {
                       const item = manifest.item[i]
-                      temp[item.id] = {
-                        href: item.href,
+                      const { href, id } = item
+                      temp[id] = {
+                        href,
                         'media-type': item['media-type']
                       }
+                      manifestMap[href] = id
                     }
                     infomation.manifest = temp
                   } else {
@@ -140,15 +143,17 @@ function loadEPUB (filePath, res, rej) {
                           navPoints = [].concat(navPoints)
   
                           for (let i = 0, len = navPoints.length; i < len; i++) {
-                            const { id, navLabel, content, navPoint } = navPoints[i]
+                            const { navLabel, content, navPoint } = navPoints[i]
+                            const href = content.src
+                            const id = manifestMap[href]
                             if (infomation.spine.includes(id)) {
-                              let nav = {
+                              let navData = {
                                 id,
                                 navLabel: navLabel.text,
-                                href: content.src,
+                                href,
                                 isSub
                               }
-                              results.push(nav)
+                              results.push(navData)
                               if (typeof navPoint === 'object') {
                                 results.push(...formatNav(navPoint, true))
                               }
@@ -172,7 +177,7 @@ function loadEPUB (filePath, res, rej) {
                         JSON.stringify(infomation),
                         (err) => {
                           if (err) { rej([filePath, '.infomation 文件保存失败']) }
-                          res([filePath, hash])
+                          res([filePath, hash, infomation])
                         }
                       )
                     }

@@ -1,8 +1,10 @@
 interface Library {
-  /** 最近阅读 */
-  history: Array<Infomation>
-  /** 分类书架 */
-  categories: Array<Category>
+  /** 书架，值为HASH */
+  shelf: string[]
+  /** 书籍数据，保存时不包含manifest/spine */
+  data: {
+    [key: string]: Infomation
+  }
 }
 
 interface Infomation {
@@ -26,13 +28,9 @@ interface Infomation {
   bookmark: Bookmark
 }
 
-interface Category {
-  name: string
-  books: Array<Infomation>
-}
-
 interface Bookmark {
-  default: Array<number>
+  /** 格式：[页码，页面百分比] */
+  history: Array<number>
   detail: number[][]
 }
 

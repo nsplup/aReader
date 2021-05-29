@@ -56,6 +56,20 @@ const colorPlan = [
   ['#324553', '#080b10'],
 ]
 
+const defaultInfo: Infomation = {
+  title: '',
+  cover: null,
+  format: 'EPUB',
+  hash: '',
+  nav: [],
+  manifest: {},
+  createdTime: 0,
+  spine: [],
+  bookmark: { history: [], detail: [] }
+}
+
+Object.freeze(defaultInfo)
+
 interface Props {
   fonts: Array<string>
   isReaderActive: boolean
@@ -92,17 +106,7 @@ export default function Reader ({
   const [backgroundColor, setBackgroundColor] = useState('#2e003e')
   /** 状态属性 */
   const [sMenuStatus, setSMenuStatus] = useState(null) /** 可选值：null/nav/font/color/search */
-  const [bookInfo, setBookInfo] = useState<Infomation>({
-    title: '',
-    cover: null,
-    format: 'EPUB',
-    hash: '',
-    nav: [],
-    manifest: {},
-    createdTime: 0,
-    spine: [],
-    bookmark: { default: [], detail: [] }
-  })
+  const [bookInfo, setBookInfo] = useState<Infomation>(Object.assign({}, defaultInfo))
   const [pageNumber, setPageNumber] = useState(0)
   const [navMenuStatus, setNavMenuStatus] = useState(true)
   /** 书籍内容 */
@@ -196,25 +200,23 @@ export default function Reader ({
   const handleOpenNavList = () => {
     const { current } = navList
     setSMenuStatus('nav')
-    current.scrollToItem(pageNumber, 'center')
+    current.scrollToItem(pageNumber)
   }
 
-  const handleJump = (href: string, event = 'jump') => {
-    const { format } = bookInfo
+  const handleJump = (href: string, progress = 0) => {
+    const { format, hash } = bookInfo
     /** 当格式未TEXT并存在缓存时从缓存获取书籍内容 */
     if (format === 'TEXT' && textCache) {
       setContent(textCache[href])
-      /** 重置页面进度 */
-      handleRestScroll()
-      setRenderCount(0)
+      parseProg(progress)
     } else {
       ipcRenderer.send(READ_BOOK, {
-        ...bookInfo,
-        event,
+        progress,
         href,
+        hash,
+        format,
       })
     }
-    setProgress(0)
   }
 
   const handleChangePage = (offset: number) => {
@@ -236,7 +238,7 @@ export default function Reader ({
       setRenderCount(Math.floor(prog * computTotalRenderCount()))
     } else {
       const { scrollHeight } = contentEl.current
-      contentEl.current.scrollTo({ left: 0, top: scrollHeight * prog, behavior: 'smooth' })
+      contentEl.current.scrollTo({ left: 0, top: scrollHeight * prog })
     }
     setProgress(prog)
   }
@@ -279,27 +281,31 @@ export default function Reader ({
       const cId = spine[pageNumber]
 
       if (id !== cId) {
-        new Promise((res, rej) => {
-          handleJump(href, 'bookmark')
-          handleCloseSMenu()
-          setPageNumber(index)
-          setTimeout(res, 100)
-        })
-        .then(res => parseProg(prog))
+        handleJump(href, prog)
+        setPageNumber(index)
       } else {
         parseProg(prog)
-        handleCloseSMenu()
       }
+      handleCloseSMenu()
     }
   }
 
   useEffect(() => {
+    if (typeof library === 'object' && currentBookHash.length > 0) {
+      const bookData = Object.assign({}, defaultInfo, library.data[currentBookHash])
+      setBookInfo(bookData)
+    }
+  }, [library, currentBookHash])
+
+  /** 历史记录保存 */
+  useEffect(() => {
     const { bookmark } = bookInfo
-    bookmark.default = [pageNumber, progress]
+    bookmark.history = [pageNumber, progress]
 
     setBookInfo(bookInfo => Object.assign({}, bookInfo, { bookmark }))
   }, [progress, pageNumber])
 
+  /** page模式下窗口变换事件处理 */
   useEffect(() => {
     window.addEventListener('resize', handleResize)
 
@@ -309,25 +315,22 @@ export default function Reader ({
   }, [progress])
 
   useEffect(() => {
-    if (currentBookHash && typeof currentBookHash === 'string') {
-      const book = library.categories[0].books.filter(({ hash }) => hash === currentBookHash)[0]
-      setBookInfo((bookInfo) => Object.assign({}, bookInfo, book))
+    if (typeof library === 'object' && currentBookHash.length > 0 && isReaderActive) {
+      const bookData = Object.assign({}, defaultInfo, library.data[currentBookHash])
+      setBookInfo(bookData)
       setTextCache(null)
-      const { spine, manifest, format } = book
-      let { bookmark } = book
-      bookmark = bookmark || { default: [], detail: [] }
-
-      ipcRenderer.send(READ_BOOK, {
-        ...book,
-        event: 'open',
-        href: manifest[spine[bookmark.default[0] || 0]].href,
-      })
-    } else {
-      isReaderActive && handleCloseReader()
+      const { bookmark, spine, manifest } = bookData
+  
+      if (bookmark.history.length === 2) {
+        const [pageNumber, progress] = bookmark.history
+        const { href } = manifest[spine[pageNumber]]
+  
+        handleJump(href, progress)
+      } else {
+        const { href } = manifest[spine[0]]
+        handleJump(href)
+      }
     }
-    /** 重置页面进度 */
-    handleRestScroll()
-    setRenderCount(0)
   }, [isReaderActive])
 
   useEffect(() => {
@@ -336,49 +339,25 @@ export default function Reader ({
     bookInfo.nav.forEach(({ id, navLabel }) => { navMap.current[id] = navLabel })
 
     /** 更新Library */
-    if (library) {
-      const { hash: cHash } = bookInfo
-      const dShelf = library.categories[0]
-      const book = dShelf.books.filter(({ hash }) => hash !== cHash)
-      handleChangeLibrary(Object.assign(
-        {},
-        library,
-        {
-          categories: [
-            {
-              name: '默认',
-              books: [bookInfo, ...book],
-            }
-          ]
-        }
-      ))
-    }
-    const loadBookListener = (event: Electron.IpcRendererEvent,
-      { content, status, event: e, format, bookmark, manifest, spine }: any
-    ) => {
+
+    const loadBookListener = (event: Electron.IpcRendererEvent, {
+      content, status, href, progress, format
+    }: any) => {
       if (status === 'fail') {
         handleToast(['缓存文件已丢失，请重新导入书籍。'])
         handleCloseReader()
         return
       }
-      const { default: def } = bookmark || { default: [] }
       if (format === 'TEXT') {
         setTextCache(content)
-        content = content[manifest[spine[def[0] || 0]].href]
+        content = content[href]
       }
       new Promise((res, rej) => {
         setContent(content)
         setTimeout(res, 100)
       })
         .then(res => {
-          const prog = def[1]
-          if (e === 'open' && typeof prog === 'number') {
-            parseProg(prog)
-          } else if (e !== 'bookmark') {
-            /** 重置页面进度 */
-            handleRestScroll()
-            setRenderCount(0)
-          }
+          parseProg(progress)
         })
     }
     ipcRenderer.on(LOAD_BOOK, loadBookListener)
@@ -388,6 +367,7 @@ export default function Reader ({
     }
   }, [bookInfo])
 
+  /** A标签点击事件代理 */
   useEffect(() => {
     const { current } = contentEl
     const handleClickProxy = (e: MouseEvent) => {
