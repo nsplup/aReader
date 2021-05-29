@@ -79,8 +79,10 @@ parentPort.on('message', (message) => {
             data = data.replace(/(<\/?[^>]+>)|([\r\n])/g, '')
             let result = matchAll(data, keyword)
             if (result.length > 0) {
+              let progress = result.map(n => n / data.length)
 
               result = sliceStr(data, result, keyword.length)
+              result = result.map((str, index) => ([str, progress[index]]))
               res(Object.assign(tmp, { result }))
             } else {
               rej()
@@ -103,9 +105,11 @@ parentPort.on('message', (message) => {
           const { href } = manifest[id]
           const text = data[href].replace(/[\r\n]/g, '')
           let result = matchAll(text, keyword)
-  
+          
           if (result.length > 0) {
+            let progress = result.map(n => n / text.length)
             result = sliceStr(text, result, keyword.length)
+            result = result.map((str, index) => ([str, progress[index]]))
             results.push({ id, result })
           }
         }
