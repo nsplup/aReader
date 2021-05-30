@@ -103,7 +103,7 @@ body, html, #root {
   z-index: 10;
 
   width: 100%;
-  height: 100%;
+  min-height: 100%;
 
   padding-bottom: 80px;
 
@@ -465,10 +465,11 @@ body, html, #root {
       width: 100%;
       height: 220px;
       overflow-y: auto;
-      margin-top: 20px;
+      margin-top: auto;
       &-item {
         position: relative;
         width: calc(100% - 10px);
+        height: 95px;
         margin: 0 auto 0 0;
         padding: 10px;
         border-radius: 10px;
@@ -494,6 +495,7 @@ body, html, #root {
         margin: 0;
         margin-top: 10px;
 
+        line-height: 135%;
         color: $common-text-description;
         text-overflow: ellipsis;
         -webkit-line-clamp: 2;
@@ -525,7 +527,7 @@ body, html, #root {
     left: 10px;
     top: 40px;
     width: 320px;
-    height: 35px;
+    height: 36px;
     overflow: hidden;
     border-radius: 5px;
     background-color: rgba(255, 255, 255, .5);

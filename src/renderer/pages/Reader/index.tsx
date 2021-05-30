@@ -5,7 +5,7 @@ import AutoSizer from "react-virtualized-auto-sizer"
 import Slider from 'react-slider'
 import { classNames } from '@utils/classNames'
 import { debounce } from '@utils/debounce'
-import { LOAD_BOOK, READ_BOOK, SEARCH_RESULT, START_SEARCH } from '@constants'
+import { LOAD_BOOK, READ_BOOK, SEARCH_RESULT, START_SEARCH, STOP_SEARCH } from '@constants'
 
 import Flipping from './Flipping'
 
@@ -128,6 +128,9 @@ export default function Reader ({
     setPageNumber(0)
     setContent('')
     setSearchResult([])
+    setKeyword('')
+    setIsWaiting(false)
+    ipcRenderer.send(STOP_SEARCH)
     /** to-do: 取消全屏 */
   }
   const [bookmarkCaller, setBookmarkCaller] = useState(0)
@@ -476,8 +479,16 @@ export default function Reader ({
 
   useEffect(() => {
     const handleSearchResult = (event: Electron.IpcRendererEvent, result: any) => {
+      const flatedResult: any = []
       setIsWaiting(false)
-      setSearchResult(result)
+      result.forEach((res: any, index: number) => {
+          const { result: cRes, id } = res
+          cRes.forEach((resMap: any[], i: number) => {
+            const [str, prog] = resMap
+            flatedResult.push([id, str, prog])
+          })
+      })
+      setSearchResult(flatedResult)
     }
     ipcRenderer.on(SEARCH_RESULT, handleSearchResult)
 
@@ -795,6 +806,7 @@ export default function Reader ({
               className="s-m-input"
               spellCheck="false"
               onInput={(e) => setKeyword((e.target as HTMLInputElement).value.trim())}
+              value={ keyword }
             />
           </div>
           <div
@@ -808,36 +820,35 @@ export default function Reader ({
             <div className="s-m-s-loading-slider"></div>
           </div>
           <div className="s-m-search-result" onClick={ handleClickSearchResult }>
-            {
-              searchResult.map((res, index) => {
-                const { result, id } = res
-                const navLabel = navMap.current[id]
-                const { href } = bookInfo.manifest[id]
-
-                return (
-                  <>
-                  {
-                    result.map((resMap: any[], i: number) => {
-                      const [str, prog] = resMap
-                      return (
-                        <div
-                          data-id={ id }
-                          data-href={ href }
-                          data-prog={ prog }
-                          key={`${index}-${i}`}
-                          className="s-m-search-result-item common-active"
-                        >
-                          <p className="s-m-search-result-title">{ typeof navLabel === 'string' ? navLabel : href }</p>
-                          <p className="s-m-search-result-text">{ str }</p>
-                          <span className="s-m-search-result-prog">{ Math.floor(prog * 100) }</span>
-                        </div>
-                      )
-                    })
-                  }
-                  </>
-                )
-              })
-            }
+            <FixedSizeList
+              width={ 500 }
+              height={ 220 }
+              itemCount={ searchResult.length }
+              itemSize={ 95 }
+            >
+              {
+                ({index, style}) => {
+                  const [id, str, prog] = searchResult[index]
+                  const navLabel = navMap.current[id]
+                  const { href } = bookInfo.manifest[id]
+                  const pageNumber = bookInfo.spine.indexOf(id)
+                  return (
+                    <div
+                      style={ style }
+                      data-id={ id }
+                      data-href={ href }
+                      data-prog={ prog }
+                      key={ index }
+                      className="s-m-search-result-item common-active"
+                    >
+                      <p className="s-m-search-result-title">{ typeof navLabel === 'string' ? navLabel : `第 ${pageNumber + 1} 章` }</p>
+                      <p className="s-m-search-result-text">{ str }</p>
+                      <span className="s-m-search-result-prog">{ Math.floor(prog * 100) }</span>
+                    </div>
+                  )
+                }
+              }
+            </FixedSizeList>
           </div>
         </div>
       </div>

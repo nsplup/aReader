@@ -25,23 +25,25 @@ function matchAll (haystack, needle) {
 
 function sliceStr (str, indexes, kLen) {
   const fragments = []
+  const isEnglish = /[\x00-\x7F]/g.test(str)
+  const computedOffset = isEnglish ? offset * 3 : offset
 
   if (indexes.length === 1) {
     const index = indexes[0]
     return [str.slice(
       Math.max(
         0,
-        index - offset
+        index - computedOffset
       ),
-      index + offset
+      index + computedOffset
     )]
   }
   for (let i = 0, len = indexes.length; i < len - 1; i++) {
     const front = Math.max(
       0,
-      indexes[i] - offset
+      indexes[i] - computedOffset
     )
-    let back = indexes[i] + offset + 1
+    let back = indexes[i] + computedOffset + 1
 
     if (back >= indexes[i + 1]) {
       back += kLen
@@ -65,7 +67,7 @@ parentPort.on('message', (message) => {
         resolvedPaths.push([
           id,
           findFile(
-            manifest[id].href,
+            path.basename(manifest[id].href),
             path.resolve('./data', hash)
           )[0]
         ])

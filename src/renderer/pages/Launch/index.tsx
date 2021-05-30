@@ -159,7 +159,7 @@ function Launch ({
         if (typeof hash === 'boolean') {
           repeat.push(filePath)
         } else {
-          shelf.push(hash)
+          shelf.unshift(hash)
           data[hash] = bookInfo
         }
       })

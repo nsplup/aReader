@@ -11,6 +11,7 @@ import {
   START_IMPORT,
   IMPORT_BOOK,
   START_SEARCH,
+  STOP_SEARCH,
   SEARCH_RESULT,
   DELETE_BOOK,
 } from '@constants'
@@ -21,14 +22,6 @@ import { findFile } from '@utils/findFile'
 import { _Promise } from '@utils/promise-extends'
 import { recursiveDelete } from '@utils/recursiveDelete'
 
-
-
-// const searchProcess = new Worker('./searchProcess.js')
-// searchProcess.postMessage({ bookInfo, keyword: (process.argv.slice(2)[1] || '') })
-
-// searchProcess.on('message', (message) => {
-//   console.log(message.result, message.result.length)
-// })
 
 function init () {
   /** 在目录生成data文件夹 */
@@ -162,10 +155,23 @@ function init () {
   })
 
   /** 处理搜索 */
+  let cacheProcess: any = null
   ipcMain.on(START_SEARCH, (event: Electron.IpcMainEvent, message) => {
-    event.reply(SEARCH_RESULT,
-      JSON.parse(fs.readFileSync(path.resolve('./data/.result'), { encoding: 'utf-8' }))
-    )
+    const searchProcess = new Worker('./resources/app/build/dist/prod/searchProcess.js')
+    searchProcess.postMessage(message)
+    cacheProcess = searchProcess
+
+    searchProcess.on('message', (message) => {
+      event.reply(SEARCH_RESULT, message.result)
+      searchProcess.terminate()
+      cacheProcess = null
+    })
+  })
+  ipcMain.on(STOP_SEARCH, () => {
+    if (cacheProcess !== null) {
+      cacheProcess.terminate()
+      cacheProcess = null
+    }
   })
 
   /** 处理删除 */
