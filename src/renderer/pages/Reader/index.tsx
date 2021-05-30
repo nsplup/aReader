@@ -5,7 +5,7 @@ import AutoSizer from "react-virtualized-auto-sizer"
 import Slider from 'react-slider'
 import { classNames } from '@utils/classNames'
 import { debounce } from '@utils/debounce'
-import { LOAD_BOOK, READ_BOOK } from '@constants'
+import { LOAD_BOOK, READ_BOOK, SEARCH_RESULT, START_SEARCH } from '@constants'
 
 import Flipping from './Flipping'
 
@@ -110,6 +110,9 @@ export default function Reader ({
   const [bookInfo, setBookInfo] = useState<Infomation>(Object.assign({}, defaultInfo))
   const [pageNumber, setPageNumber] = useState(0)
   const [navMenuStatus, setNavMenuStatus] = useState(true)
+  const [isWaiting, setIsWaiting] = useState(false)
+  const [keyword, setKeyword] = useState('')
+  const [searchResult, setSearchResult] = useState([])
   /** 书籍内容 */
   const [content, setContent] = useState('')
   const [textCache, setTextCache] = useState(null)
@@ -124,6 +127,7 @@ export default function Reader ({
     setTextCache(null)
     setPageNumber(0)
     setContent('')
+    setSearchResult([])
     /** to-do: 取消全屏 */
   }
   const [bookmarkCaller, setBookmarkCaller] = useState(0)
@@ -156,7 +160,7 @@ export default function Reader ({
     const { offsetWidth } = contentEl.current
     const { scrollWidth } = current
 
-    return Math.ceil((scrollWidth - offsetWidth) / (offsetWidth + 140))
+    return Math.ceil((scrollWidth - offsetWidth) / (offsetWidth + 140)) + 1
   }
   const handleWheel = (e: React.WheelEvent) => {
     const { deltaY } = e
@@ -232,6 +236,14 @@ export default function Reader ({
 
     if (plan) {
       setCColorPlan(parseInt(plan))
+    }
+  }
+
+  const handleStartSearch = () => {
+    if (keyword.length > 0) {
+      setSearchResult([])
+      setIsWaiting(true)
+      ipcRenderer.send(START_SEARCH, { bookInfo, keyword })
     }
   }
 
@@ -327,6 +339,28 @@ export default function Reader ({
         parseProg(prog)
       }
       handleCloseSMenu()
+    }
+  }
+  const handleClickSearchResult = (e: React.MouseEvent) => {
+    let { target }: any = e
+    let href = target.getAttribute('data-href')
+
+    /** 处理事件目标 */
+    if (!href) {
+      target = target.parentElement
+      href = target.getAttribute('data-href')
+    }
+
+    if (href) {
+      const prog = parseFloat(target.getAttribute('data-prog'))
+      const id = target.getAttribute('data-id')
+      const index = bookInfo.spine.indexOf(id)
+      if (index !== pageNumber) {
+        handleJump(href, prog + 0.1)
+        setPageNumber(index)
+      } else {
+        parseProg(prog)
+      }
     }
   }
 
@@ -439,6 +473,18 @@ export default function Reader ({
   useEffect(handleChangeStyle, [
     fontFamily, fontSize, textIndent, lineHeight, textColor, backgroundColor, cColorPlan
   ])
+
+  useEffect(() => {
+    const handleSearchResult = (event: Electron.IpcRendererEvent, result: any) => {
+      setIsWaiting(false)
+      setSearchResult(result)
+    }
+    ipcRenderer.on(SEARCH_RESULT, handleSearchResult)
+
+    return () => {
+      ipcRenderer.off(SEARCH_RESULT, handleSearchResult)
+    }
+  }, [])
 
   return (
     <div
@@ -720,6 +766,7 @@ export default function Reader ({
             draggable="false"
             width="200px"
             style={{
+              display: searchResult.length > 0 ? 'none' : '',
               position: 'absolute',
               left: 0,
               right: 0,
@@ -728,12 +775,18 @@ export default function Reader ({
             }}
           />
           <div style={{ position: 'relative' }}>
-            <button className="flex-box s-m-search-btn">
+            <button className="flex-box s-m-search-btn" onClick={ handleStartSearch }>
               <i className="ri-search-line"></i>
             </button>
-            <input type="text" className="s-m-input" spellCheck="false"/>
+            <input
+              type="text"
+              className="s-m-input"
+              spellCheck="false"
+              onInput={(e) => setKeyword((e.target as HTMLInputElement).value.trim())}
+            />
           </div>
           <div
+            style={{ display: isWaiting ? '' : 'none' }}
             className={
               classNames(
                 's-m-s-loading'
@@ -741,6 +794,38 @@ export default function Reader ({
             }
           >
             <div className="s-m-s-loading-slider"></div>
+          </div>
+          <div className="s-m-search-result" onClick={ handleClickSearchResult }>
+            {
+              searchResult.map((res, index) => {
+                const { result, id } = res
+                const navLabel = navMap.current[id]
+                const { href } = bookInfo.manifest[id]
+
+                return (
+                  <>
+                  {
+                    result.map((resMap: any[], i: number) => {
+                      const [str, prog] = resMap
+                      return (
+                        <div
+                          data-id={ id }
+                          data-href={ href }
+                          data-prog={ prog }
+                          key={`${index}-${i}`}
+                          className="s-m-search-result-item common-active"
+                        >
+                          <p className="s-m-search-result-title">{ typeof navLabel === 'string' ? navLabel : href }</p>
+                          <p className="s-m-search-result-text">{ str }</p>
+                          <span className="s-m-search-result-prog">{ Math.floor(prog * 100) }</span>
+                        </div>
+                      )
+                    })
+                  }
+                  </>
+                )
+              })
+            }
           </div>
         </div>
       </div>

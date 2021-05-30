@@ -458,6 +458,55 @@ body, html, #root {
         transform: translate3d(calc(100% - 10px), 0, 0) scale(.9);
       }
     }
+    &-result {
+      width: 100%;
+      height: 220px;
+      overflow-y: auto;
+      margin-top: 20px;
+      &-item {
+        position: relative;
+        width: calc(100% - 10px);
+        margin: 0 auto 0 0;
+        padding: 10px;
+        border-radius: 10px;
+        box-sizing: border-box;
+        &:hover {
+          background-color: rgba(50, 50, 50, .1);
+        }
+      }
+      &-title {
+        width: 380px;
+        overflow: hidden;
+        margin: 0;
+        color: #505050;
+        font-weight: bold;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      &-text {
+        display: -webkit-box;
+        width: 100%;
+        height: 44px;
+        overflow: hidden;
+        margin: 0;
+        margin-top: 10px;
+
+        color: $common-text-description;
+        text-overflow: ellipsis;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+      &-prog {
+        position: absolute;
+        top: 12px;
+        right: 10px;
+
+        color: $common-text-description;
+        &::after {
+          content: '%';
+        }
+      }
+    }
   }
   &-s-loading {
     @keyframes move {

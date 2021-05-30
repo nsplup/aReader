@@ -4,7 +4,7 @@ const findFile = require('./findFile')
 const promise_finish = require('./promise-extends')
 
 const { parentPort } = require('worker_threads')
-const offset = 25
+const offset = 30
 
 function matchAll (haystack, needle) {
   const result = []

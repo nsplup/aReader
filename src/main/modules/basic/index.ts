@@ -8,6 +8,8 @@ import {
   LOAD_USERCONFIG,
   READ_BOOK,
   LOAD_BOOK,
+  START_SEARCH,
+  SEARCH_RESULT,
 } from '@constants'
 import fs from 'fs'
 import path from 'path'
@@ -146,6 +148,13 @@ function init () {
     } catch (err) {
       event.reply(LOAD_BOOK, { content: null, status: 'fail', href, format, progress })
     }
+  })
+
+  /** 处理搜索 */
+  ipcMain.on(START_SEARCH, (event: Electron.IpcMainEvent, message) => {
+    event.reply(SEARCH_RESULT,
+      JSON.parse(fs.readFileSync(path.resolve('./data/.result'), { encoding: 'utf-8' }))
+    )
   })
 }
 
