@@ -8,6 +8,7 @@ import {
   WINDOW_READY,
   LOAD_LIBRARY,
   LOAD_USERCONFIG,
+  IMPORT_BOOK,
   START_IMPORT,
   DELETE_BOOK,
 } from '@constants'
@@ -104,18 +105,7 @@ function Launch ({
     const fontsListener = (event: Electron.IpcRendererEvent, fonts: Array<string>) => {
       generateFonts(fonts)
     }
-    /** 主线程请求书架数据事件 */
-    const libraryListener = (event: Electron.IpcRendererEvent, library: Library) => {
-      updateLibrary(library)
-    }
-    /** 主线程请求用户数据事件 */
-    const userconfigListener = (event: Electron.IpcRendererEvent, userconfig: UserConfig) => {
-      updateUserConfig(userconfig)
-    }
     ipcRenderer.on(FONTS_READY, fontsListener)
-    ipcRenderer.on(LOAD_LIBRARY, libraryListener)
-    ipcRenderer.on(LOAD_USERCONFIG, userconfigListener)
-    ipcRenderer.on(START_IMPORT, startImportListener)
     ipcRenderer.send(WINDOW_READY)
 
     /** 右键菜单事件 */
@@ -135,19 +125,64 @@ function Launch ({
         })
       }
     }
-
     document.body.addEventListener('contextmenu', handleContextmenu)
     document.body.addEventListener('click', handleEnableReader)
 
+
     return () => {
-      ipcRenderer.off(FONTS_READY, fontsListener)
-      ipcRenderer.off(LOAD_LIBRARY, libraryListener)
-      ipcRenderer.off(LOAD_USERCONFIG, userconfigListener)
-      ipcRenderer.off(START_IMPORT, startImportListener)
       document.body.removeEventListener('contextmenu', handleContextmenu)
       document.body.removeEventListener('click', handleEnableReader)
     }
   }, [])
+  useEffect(() => {
+    /** 主线程请求书架数据事件 */
+    const libraryListener = (event: Electron.IpcRendererEvent, library: Library) => {
+      updateLibrary(library)
+    }
+    /** 主线程请求用户数据事件 */
+    const userconfigListener = (event: Electron.IpcRendererEvent, userconfig: UserConfig) => {
+      updateUserConfig(userconfig)
+    }
+    /** 导入事件反馈 */
+    const importBookListener = (event: Electron.IpcRendererEvent, { resolve, reject }: any) => {
+      const repeat: string[] = []
+      const failure: string[] = []
+      const shelf = library.shelf.concat()
+      const data: any = Object.assign({}, library.data)
+      resolve.forEach((result: any) => {
+        const [filePath, hash, bookInfo] = result
+        if (typeof hash === 'boolean') {
+          repeat.push(filePath)
+        } else {
+          shelf.push(hash)
+          data[hash] = bookInfo
+        }
+      })
+      reject.forEach((result: any) => {
+        const [filePath, reason] = result
+        failure.push(`${filePath}: ${reason}`)
+      })
+      setTaskCount(oldCount => oldCount - resolve.length - reject.length)
+      updateLibrary({ shelf, data })
+      if (repeat.length > 0 || failure.length > 0) {
+        setMessage([
+          `${repeat.length} 重复书籍； ${failure.length} 导入失败。`,
+          (repeat.length > 0 ? `重复书籍：\n${repeat.join('\n')}\n` : '') +
+          (failure.length > 0 ?`导入失败：\n${failure.join('\n')}` : '')
+        ])
+      }
+    }
+    ipcRenderer.on(LOAD_LIBRARY, libraryListener)
+    ipcRenderer.on(LOAD_USERCONFIG, userconfigListener)
+    ipcRenderer.on(START_IMPORT, startImportListener)
+    ipcRenderer.on(IMPORT_BOOK, importBookListener)
+    return () => {
+      ipcRenderer.off(LOAD_LIBRARY, libraryListener)
+      ipcRenderer.off(LOAD_USERCONFIG, userconfigListener)
+      ipcRenderer.off(START_IMPORT, startImportListener)
+      ipcRenderer.off(IMPORT_BOOK, importBookListener)
+    }
+  }, [library])
 
   useEffect(() => {
     document.body.style.overflow = isReaderActive ? 'hidden' : ''
@@ -158,7 +193,8 @@ function Launch ({
       <div
         className="flex-box launch-wrapper"
         style={{
-          userSelect: "none"
+          display: isReaderActive ? 'none' : '',
+          userSelect: "none",
         }}
       >
         <button className="flex-box common-button common-active" onClick={ handleOpenDialog }>

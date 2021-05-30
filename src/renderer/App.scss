@@ -105,7 +105,10 @@ body, html, #root {
   width: 100%;
   height: 100%;
 
+  padding-bottom: 80px;
+
   background-color: #ffffff;
+  box-sizing: border-box;
 }
 
 .launch-library {
@@ -837,7 +840,7 @@ body, html, #root {
     z-index: -1;
     width: 450px;
     margin: auto;
-
+    font-size: 13px;
     transform: scaleY(0);
     transition: all .2s ease-out;
   }
@@ -850,7 +853,6 @@ body, html, #root {
     padding: 20px;
     border-radius: 10px;
     color: #888888;
-    font-size: 15px;
     white-space: nowrap;
     text-overflow: ellipsis;
     background-color: #f7f7f7;
@@ -880,6 +882,7 @@ body, html, #root {
     }
     & p {
       margin-bottom: 0;
+      white-space: pre-wrap;
     }
   }
   &-btn {

@@ -1,5 +1,4 @@
 const _7z = require('node-7z')
-const _7zbin = require('7zip')['7z']
 const jschardet = require('jschardet')
 const iconv = require('iconv-lite')
 const path = require('path')
@@ -7,6 +6,8 @@ const fs = require('fs')
 
 const chunkSize = 1024 * 103 /** 最大分块大小 */
 const dirName = path.resolve('.', 'data')
+const _7zbin = path.resolve('./resources/app/node_modules/7zip/7zip-lite/7z.exe')
+
 
 /** 分块函数 */
 function _chunk (chunks, maxSize) {

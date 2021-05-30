@@ -1,5 +1,4 @@
 const _7z = require('node-7z')
-const _7zbin = require('7zip')['7z']
 const fxp = require('fast-xml-parser')
 const path = require('path')
 const fs = require('fs')
@@ -7,6 +6,7 @@ const findFile = require('./findFile')
 const getFileMimeType = require('./getFileMimeType')
 
 const dirName = path.resolve('.', 'data')
+const _7zbin = path.resolve('./resources/app/node_modules/7zip/7zip-lite/7z.exe')
 
 function loadEPUB (filePath, res, rej) {
   /** 计算 SHA256 */

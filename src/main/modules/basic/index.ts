@@ -8,6 +8,8 @@ import {
   LOAD_USERCONFIG,
   READ_BOOK,
   LOAD_BOOK,
+  START_IMPORT,
+  IMPORT_BOOK,
   START_SEARCH,
   SEARCH_RESULT,
   DELETE_BOOK,
@@ -19,12 +21,7 @@ import { findFile } from '@utils/findFile'
 import { _Promise } from '@utils/promise-extends'
 import { recursiveDelete } from '@utils/recursiveDelete'
 
-// const loadProcess = new Worker('./loadProcess.js')
-// loadProcess.postMessage({ paths: process.argv.slice(2) })
 
-// loadProcess.on('message', (message) => {
-//   console.log(message.result)
-// })
 
 // const searchProcess = new Worker('./searchProcess.js')
 // searchProcess.postMessage({ bookInfo, keyword: (process.argv.slice(2)[1] || '') })
@@ -37,14 +34,21 @@ function init () {
   /** 在目录生成data文件夹 */
   fs.mkdir('./data', (err) => { if (err) { console.log(err) }})
   /** 「导入书籍」按钮事件处理 */
-  ipcMain.on(OPEN_DIALOG, () => {
+  ipcMain.on(OPEN_DIALOG, (event: Electron.IpcMainEvent) => {
     dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
       filters: [{ name: 'eBook', extensions: ['epub', 'txt'] }],
       properties: ['openFile', 'multiSelections']
     })
       .then(({ filePaths }) => {
         if (filePaths.length > 0) {
-          console.log(filePaths.join('\n'))
+          event.reply(START_IMPORT, filePaths.length)
+          const loadProcess = new Worker('./resources/app/build/dist/prod/loadProcess.js')
+          loadProcess.postMessage({ paths: filePaths })
+
+          loadProcess.on('message', (message) => {
+            event.reply(IMPORT_BOOK, message.result)
+            loadProcess.terminate()
+          })
         }
       })
   })

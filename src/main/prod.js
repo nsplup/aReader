@@ -1,16 +1,22 @@
 const { app, BrowserWindow, Menu } = require('electron')
-// import path from 'path'
+const { basic } = require('@/modules/basic')
+const path = require('path')
 
 function createWindow () {
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    title: '镜览',
+    Width: 950,
+    minWidth: 650,
+    Height: 600,
+    minHeight: 500,
     webPreferences: {
-
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true,
     }
   })
   
-  win.loadFile('./src/main/index.html')
+  win.loadFile('./build/dist/prod/index.html')
 }
 
 app.whenReady()
@@ -30,4 +36,6 @@ app.on('window-all-closed', () => {
   }
 })
 
-Menu.setApplicationMenu(Menu.buildFromTemplate([])) /** 隐藏菜单栏 */
+basic.init()
+
+// Menu.setApplicationMenu(Menu.buildFromTemplate([])) /** 隐藏菜单栏 */

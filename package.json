@@ -2,7 +2,7 @@
   "name": "a-reader",
   "version": "1.0.0",
   "author": "Luke Pan",
-  "main": "build/dist/dev/main.js",
+  "main": "build/dist/prod/main.js",
   "build": {
     "productName": "镜览",
     "appId": "app.nsplup.areader",
@@ -13,19 +13,19 @@
     "asar": false,
     "artifactName": "${productName}-installer.${ext}",
     "files": [
-      "build/**/*"
+      "build/icons/icon.ico",
+      "build/dist/prod/**/*"
     ],
     "win": {
-      "icon": "build/icons/icon.ico",
-      "target": "portable"
+      "icon": "build/icons/icon.ico"
     },
     "electronDownload": {
       "mirror": "http://npm.taobao.org/mirrors/electron/"
     }
   },
   "scripts": {
-    "start": "webpack-dev-server --config webpack.dev.config.js",
-    "buildDev": "webpack --config webpack.dev.config.js && electron ./build/dist/dev/main.js"
+    "buildDev": "webpack --config webpack.dev.config.js && electron ./build/dist/dev/main.js",
+    "build": "webpack --config webpack.prod.config.js && electron-builder"
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",
@@ -54,6 +54,7 @@
     "sass": "^1.26.5",
     "sass-loader": "^8.0.2",
     "style-loader": "^1.2.1",
+    "terser-webpack-plugin": "^4.2.3",
     "ts-loader": "^7.0.4",
     "typescript": "^3.9.3",
     "webpack": "^4.43.0",
