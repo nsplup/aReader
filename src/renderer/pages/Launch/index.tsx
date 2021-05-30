@@ -9,6 +9,7 @@ import {
   LOAD_LIBRARY,
   LOAD_USERCONFIG,
   START_IMPORT,
+  DELETE_BOOK,
 } from '@constants'
 
 import Book from './Book'
@@ -71,14 +72,26 @@ function Launch ({
   }
 
   /** 关闭右键菜单事件 */
+  const hashCache = useRef('')
   const handleCloseCMenu = () => {
     const { current: cMenuEl } = cMenu
     setIsCMenuActive(false)
+    hashCache.current = ''
         
     cMenuEl.style.cssText = toCSSText({
       left: 0,
       top: 0,
     })
+  }
+  const handleDelete = () => {
+    const hash = hashCache.current
+    let { shelf } = library
+
+    shelf = shelf.filter(n => n !== hash)
+
+    updateLibrary(Object.assign({}, library, { shelf }))
+    handleCloseCMenu()
+    ipcRenderer.send(DELETE_BOOK, hash)
   }
 
   /** 正在导入的书籍数量 */
@@ -108,10 +121,13 @@ function Launch ({
     /** 右键菜单事件 */
     const handleContextmenu = (e: MouseEvent) => {
       const { path, pageX, pageY } = e as any
+      const book = [...path].filter((el: Element) => el.className && el.className.includes('book-wrapper'))[0]
 
-      if (!isReaderActive && [...path].some((el: Element) => el.className && el.className.includes('book-wrapper'))) {
-        setIsCMenuActive(true)
+      if (!isReaderActive && book) {
+        const bookHash = book.getAttribute('data-hash')
         const { current: cMenuEl } = cMenu
+        setIsCMenuActive(true)
+        hashCache.current= bookHash
         
         cMenuEl.style.cssText = toCSSText({
           left: pageX,
@@ -259,7 +275,7 @@ function Launch ({
           <i className="ri-heart-line"></i>
           <p className="com-c-title">加入书架</p>
         </div> */}
-        <div className="flex-box com-c-item common-active">
+        <div className="flex-box com-c-item common-active" onClick={ handleDelete }>
           <i className="ri-delete-bin-line"></i>
           <p className="com-c-title">删除书籍</p>
         </div>

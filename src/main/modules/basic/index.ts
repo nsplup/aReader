@@ -10,12 +10,14 @@ import {
   LOAD_BOOK,
   START_SEARCH,
   SEARCH_RESULT,
+  DELETE_BOOK,
 } from '@constants'
 import fs from 'fs'
 import path from 'path'
 import { Worker } from 'worker_threads'
 import { findFile } from '@utils/findFile'
 import { _Promise } from '@utils/promise-extends'
+import { recursiveDelete } from '@utils/recursiveDelete'
 
 // const loadProcess = new Worker('./loadProcess.js')
 // loadProcess.postMessage({ paths: process.argv.slice(2) })
@@ -72,7 +74,7 @@ function init () {
               tasks.push(new Promise((res, rej) => {
                 fs.readFile(path.resolve('./data', hash, '.infomation'), { encoding: 'utf-8' }, (err, data) => {
                   if (err) {
-                    rej(err)
+                    rej(hash)
                   } else {
                     res(JSON.parse(data))
                   }
@@ -81,12 +83,13 @@ function init () {
             })
             _Promise
               .finish(tasks)
-              .then(({ resolve }) => {
+              .then(({ resolve, reject }) => {
                 resolve.forEach((infomation: Infomation) => {
                   const { hash } = infomation
                   
                   library.data[hash] = Object.assign({}, library.data[hash], infomation)
                 })
+                library.shelf = library.shelf.filter(hash => !reject.includes(hash))
                 event.reply(LOAD_LIBRARY, library)
               })
           }
@@ -155,6 +158,12 @@ function init () {
     event.reply(SEARCH_RESULT,
       JSON.parse(fs.readFileSync(path.resolve('./data/.result'), { encoding: 'utf-8' }))
     )
+  })
+
+  /** 处理删除 */
+  ipcMain.on(DELETE_BOOK, (event: Electron.IpcMainEvent, hash) => {
+    const resolvedPath = path.join('./data', hash)
+    recursiveDelete(resolvedPath)
   })
 }
 
