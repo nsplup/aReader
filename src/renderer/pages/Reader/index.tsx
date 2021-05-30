@@ -16,8 +16,8 @@ const CustomSlider = (props: any) => (
     className="com-slider"
     thumbClassName="com-slider-thumb"
     trackClassName="com-slider-track"
-    renderThumb={(props, state) => (
-      <div { ...props }>
+    renderThumb={(tProps, state) => (
+      <div { ...tProps }>
         <div className="com-slider-tips">
           { Math.floor(state.valueNow) }
         </div>
@@ -204,6 +204,20 @@ export default function Reader ({
     setSMenuStatus('font')
     fontList.current.scrollToItem(fonts.indexOf(fontFamily), 'center')
   }
+  const handleChangeFontFamily = (e: React.MouseEvent) => {
+    let { target }: any = e
+    let font = target.getAttribute('data-font')
+
+    /** 处理事件目标 */
+    if (!font) {
+      target = target.parentElement
+      font = target.getAttribute('data-font')
+    }
+
+    if (font) {
+      setFontFamily(font)
+    }
+  }
 
   const navList = useRef(null)
   const handleOpenNavList = () => {
@@ -381,6 +395,20 @@ export default function Reader ({
     }
   }, [bookInfo])
 
+  /** 相应样式变更 */
+  const [contentStyle, setContentStyle] = useState({})
+  useEffect(() => {
+    const multiple = fontSize / 18
+    const computedTextIndent = textIndent / 10 / multiple
+    
+    setContentStyle(style => Object.assign({}, style, {
+      fontFamily,
+      fontSize: Math.floor(fontSize) + 'px',
+      textIndent: computedTextIndent + 'em',
+      lineHeight: 100 + lineHeight + '%'
+    }))
+  }, [fontFamily, fontSize, textIndent, lineHeight])
+
   return (
     <div
       className={
@@ -402,9 +430,15 @@ export default function Reader ({
         ref={ contentEl }
         onWheel={ handleWheel }
         onScroll={ handleScroll }
+        style={ contentStyle }
       >
         <div
-          dangerouslySetInnerHTML={{ __html: content }}
+          dangerouslySetInnerHTML={{
+            __html: content
+              .split(/[\r\n]+/)
+              .map(str => `<p>${str}</p>`)
+              .join('')
+          }}
           ref={ renderEl }
           style={{
             transform: renderCount > 0 && renderMode === 'page'
@@ -531,19 +565,34 @@ export default function Reader ({
             display: sMenuStatus === 'font' ? 'flex' : 'none'
           }}
           className="flex-box s-m-font"
+          onClick={ handleChangeFontFamily }
         >
           <div className="flex-box s-m-font-style">
             <div className="flex-box s-m-row">
               <p className="s-m-title">字体大小</p>
-              <CustomSlider min={12} max={50} step={0.38} defaultValue={fontSize}/>
+              <CustomSlider
+                min={12}
+                max={50}
+                step={0.38}
+                defaultValue={ fontSize }
+                onChange={ (val: number) => setFontSize(val) }
+              />
             </div>
             <div className="flex-box s-m-row">
               <p className="s-m-title">首行缩进</p>
-              <CustomSlider max={100} defaultValue={textIndent}/>
+              <CustomSlider
+                max={100}
+                defaultValue={ textIndent }
+                onChange={ (val: number) => setTextIndent(val) }
+              />
             </div>
             <div className="flex-box s-m-row">
               <p className="s-m-title">行距</p>
-              <CustomSlider max={100} defaultValue={lineHeight}/>
+              <CustomSlider
+                max={100}
+                defaultValue={ lineHeight }
+                onChange={ (val: number) => setLineHeight(val) }
+              />
             </div>
           </div>
           <FixedSizeList
@@ -560,6 +609,7 @@ export default function Reader ({
                   <p
                     style={ Object.assign({ fontFamily: font }, style) }
                     key={ index }
+                    data-font={ font }
                     className={
                       classNames(
                         'common-ellipsis common-active s-m-font-item',

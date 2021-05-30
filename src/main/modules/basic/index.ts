@@ -134,8 +134,6 @@ function init () {
                 ? fragment
                 : ''
             })
-            /** 去除空白行 */
-            .replace(/[\r\n]+/g, '\n')
           event.reply(LOAD_BOOK, { content, status: 'sucess', href, format, progress })
         })
       } else {
