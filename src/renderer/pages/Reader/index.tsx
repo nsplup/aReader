@@ -4,6 +4,7 @@ import { HexColorPicker } from 'react-colorful'
 import AutoSizer from "react-virtualized-auto-sizer"
 import Slider from 'react-slider'
 import { classNames } from '@utils/classNames'
+import { debounce } from '@utils/debounce'
 import { LOAD_BOOK, READ_BOOK } from '@constants'
 
 import Flipping from './Flipping'
@@ -219,6 +220,21 @@ export default function Reader ({
     }
   }
 
+  const handleChangeColorPlan = (e: React.MouseEvent) => {
+    let { target }: any = e
+    let plan = target.getAttribute('data-plan')
+
+    /** 处理事件目标 */
+    if (!plan) {
+      target = target.parentElement
+      plan = target.getAttribute('data-plan')
+    }
+
+    if (plan) {
+      setCColorPlan(parseInt(plan))
+    }
+  }
+
   const navList = useRef(null)
   const handleOpenNavList = () => {
     const { current } = navList
@@ -397,17 +413,32 @@ export default function Reader ({
 
   /** 相应样式变更 */
   const [contentStyle, setContentStyle] = useState({})
-  useEffect(() => {
+  const handleChangeStyle = debounce(() => {
     const multiple = fontSize / 18
     const computedTextIndent = textIndent / 10 / multiple
+    let color: string, bgColor: string
+
+    if (cColorPlan === -1) {
+      color = textColor
+      bgColor = backgroundColor
+    } else {
+      const [front, back] = colorPlan[cColorPlan]
+      color = front
+      bgColor = back
+    }
     
     setContentStyle(style => Object.assign({}, style, {
+      color,
       fontFamily,
       fontSize: Math.floor(fontSize) + 'px',
       textIndent: computedTextIndent + 'em',
-      lineHeight: 100 + lineHeight + '%'
+      lineHeight: 100 + lineHeight + '%',
+      backgroundColor: bgColor
     }))
-  }, [fontFamily, fontSize, textIndent, lineHeight])
+  }, 150)
+  useEffect(handleChangeStyle, [
+    fontFamily, fontSize, textIndent, lineHeight, textColor, backgroundColor, cColorPlan
+  ])
 
   return (
     <div
@@ -630,6 +661,7 @@ export default function Reader ({
             display: sMenuStatus === 'color' ? 'flex' : 'none'
           }}
           className="flex-box s-m-color"
+          onClick={ handleChangeColorPlan }
         >
           <div className="flex-box s-m-row" style={{ padding: '0' }}>
             <p className="s-m-title">基础方案</p>
