@@ -160,7 +160,7 @@ export default function Reader ({
     const { offsetWidth } = contentEl.current
     const { scrollWidth } = current
 
-    return Math.ceil((scrollWidth - offsetWidth) / (offsetWidth + 140)) + 1
+    return Math.ceil((scrollWidth - offsetWidth) / (offsetWidth + 60))
   }
   const handleWheel = (e: React.WheelEvent) => {
     const { deltaY } = e
@@ -286,7 +286,7 @@ export default function Reader ({
 
   const parseProg = (prog: number) => {
     if (renderMode === 'page') {
-      setRenderCount(Math.floor(prog * computTotalRenderCount()))
+      setRenderCount(Math.ceil(prog * computTotalRenderCount()))
     } else {
       const { scrollHeight, offsetHeight } = contentEl.current
       const computedHeight = scrollHeight - offsetHeight
@@ -356,7 +356,7 @@ export default function Reader ({
       const id = target.getAttribute('data-id')
       const index = bookInfo.spine.indexOf(id)
       if (index !== pageNumber) {
-        handleJump(href, prog + 0.1)
+        handleJump(href, prog)
         setPageNumber(index)
       } else {
         parseProg(prog)
@@ -466,7 +466,7 @@ export default function Reader ({
       fontFamily,
       fontSize: Math.floor(fontSize) + 'px',
       textIndent: computedTextIndent + 'em',
-      lineHeight: 100 + lineHeight + '%',
+      lineHeight: 150 + lineHeight + '%',
       backgroundColor: bgColor
     }))
   }, 150)
@@ -509,6 +509,18 @@ export default function Reader ({
         onScroll={ handleScroll }
         style={ contentStyle }
       >
+        <div
+          style={{
+            display: renderMode === 'page' ? '' : 'none',
+            position: 'fixed',
+            left: 0,
+            bottom: 0,
+            width: progress * 100 + '%',
+            height: '6px',
+            backgroundColor: '#72047f',
+            transition: 'width 0.3s ease 0s',
+          }}
+        ></div>
         <div
           dangerouslySetInnerHTML={{
             __html: content
