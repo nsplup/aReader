@@ -122,6 +122,7 @@ export default function Reader ({
     setBookInfo(Object.assign({}, defaultInfo))
     setTextCache(null)
     setPageNumber(0)
+    setContent('')
     /** to-do: 取消全屏 */
   }
   const [bookmarkCaller, setBookmarkCaller] = useState(0)
@@ -138,7 +139,6 @@ export default function Reader ({
     bookmark = Object.assign({}, bookmark, {
       detail: [...bookmark.detail]
     })
-    console.log(bookmark)
     setBookInfo(bookInfo => Object.assign({}, bookInfo, { bookmark }))
     setBookmarkCaller(Date.now())
   }
