@@ -74,28 +74,32 @@ function init () {
             library = JSON.parse(data)
             const tasks: any = []
 
-            library.shelf.forEach(hash => {
-              tasks.push(new Promise((res, rej) => {
-                fs.readFile(path.resolve('./data', hash, '.infomation'), { encoding: 'utf-8' }, (err, data) => {
-                  if (err) {
-                    rej(hash)
-                  } else {
-                    res(JSON.parse(data))
-                  }
-                })
-              }))
-            })
-            _Promise
-              .finish(tasks)
-              .then(({ resolve, reject }) => {
-                resolve.forEach((infomation: Infomation) => {
-                  const { hash } = infomation
-                  
-                  library.data[hash] = Object.assign({}, library.data[hash], infomation)
-                })
-                library.shelf = library.shelf.filter(hash => !reject.includes(hash))
-                event.reply(LOAD_LIBRARY, library)
+            if (library.shelf.length === 0) {
+              event.reply(LOAD_LIBRARY, library)
+            } else {
+              library.shelf.forEach(hash => {
+                tasks.push(new Promise((res, rej) => {
+                  fs.readFile(path.resolve('./data', hash, '.infomation'), { encoding: 'utf-8' }, (err, data) => {
+                    if (err) {
+                      rej(hash)
+                    } else {
+                      res(JSON.parse(data))
+                    }
+                  })
+                }))
               })
+              _Promise
+                .finish(tasks)
+                .then(({ resolve, reject }) => {
+                  resolve.forEach((infomation: Infomation) => {
+                    const { hash } = infomation
+                    
+                    library.data[hash] = Object.assign({}, library.data[hash], infomation)
+                  })
+                  library.shelf = library.shelf.filter(hash => !reject.includes(hash))
+                  event.reply(LOAD_LIBRARY, library)
+                })
+            }
           }
         })
         /** 读取.userconfig如果不存在则创建 */

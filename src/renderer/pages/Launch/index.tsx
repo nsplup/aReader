@@ -127,14 +127,6 @@ function Launch ({
     }
     document.body.addEventListener('contextmenu', handleContextmenu)
     document.body.addEventListener('click', handleEnableReader)
-
-
-    return () => {
-      document.body.removeEventListener('contextmenu', handleContextmenu)
-      document.body.removeEventListener('click', handleEnableReader)
-    }
-  }, [])
-  useEffect(() => {
     /** 主线程请求书架数据事件 */
     const libraryListener = (event: Electron.IpcRendererEvent, library: Library) => {
       updateLibrary(library)
@@ -143,6 +135,19 @@ function Launch ({
     const userconfigListener = (event: Electron.IpcRendererEvent, userconfig: UserConfig) => {
       updateUserConfig(userconfig)
     }
+    ipcRenderer.on(LOAD_LIBRARY, libraryListener)
+    ipcRenderer.on(LOAD_USERCONFIG, userconfigListener)
+    ipcRenderer.on(START_IMPORT, startImportListener)
+
+    return () => {
+      document.body.removeEventListener('contextmenu', handleContextmenu)
+      document.body.removeEventListener('click', handleEnableReader)
+      ipcRenderer.off(LOAD_LIBRARY, libraryListener)
+      ipcRenderer.off(LOAD_USERCONFIG, userconfigListener)
+      ipcRenderer.off(START_IMPORT, startImportListener)
+    }
+  }, [])
+  useEffect(() => {
     /** 导入事件反馈 */
     const importBookListener = (event: Electron.IpcRendererEvent, { resolve, reject }: any) => {
       const repeat: string[] = []
@@ -172,14 +177,9 @@ function Launch ({
         ])
       }
     }
-    ipcRenderer.on(LOAD_LIBRARY, libraryListener)
-    ipcRenderer.on(LOAD_USERCONFIG, userconfigListener)
-    ipcRenderer.on(START_IMPORT, startImportListener)
+
     ipcRenderer.on(IMPORT_BOOK, importBookListener)
     return () => {
-      ipcRenderer.off(LOAD_LIBRARY, libraryListener)
-      ipcRenderer.off(LOAD_USERCONFIG, userconfigListener)
-      ipcRenderer.off(START_IMPORT, startImportListener)
       ipcRenderer.off(IMPORT_BOOK, importBookListener)
     }
   }, [library])
