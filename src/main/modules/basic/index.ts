@@ -14,6 +14,7 @@ import {
   STOP_SEARCH,
   SEARCH_RESULT,
   DELETE_BOOK,
+  TOGGLE_FULLSCREEN,
 } from '@constants'
 import fs from 'fs'
 import path from 'path'
@@ -178,6 +179,12 @@ function init () {
   ipcMain.on(DELETE_BOOK, (event: Electron.IpcMainEvent, hash) => {
     const resolvedPath = path.join('./data', hash)
     recursiveDelete(resolvedPath)
+  })
+
+  /** 处理全屏切换 */
+  ipcMain.on(TOGGLE_FULLSCREEN, (event: Electron.IpcMainEvent, status) => {
+    const win = BrowserWindow.getFocusedWindow()
+    win.setFullScreen(status)
   })
 }
 

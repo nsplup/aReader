@@ -5,7 +5,7 @@ import AutoSizer from "react-virtualized-auto-sizer"
 import Slider from 'react-slider'
 import { classNames } from '@utils/classNames'
 import { debounce } from '@utils/debounce'
-import { LOAD_BOOK, READ_BOOK, SEARCH_RESULT, START_SEARCH, STOP_SEARCH } from '@constants'
+import { LOAD_BOOK, READ_BOOK, SEARCH_RESULT, START_SEARCH, STOP_SEARCH, TOGGLE_FULLSCREEN } from '@constants'
 
 import Flipping from './Flipping'
 
@@ -113,6 +113,7 @@ export default function Reader ({
   const [isWaiting, setIsWaiting] = useState(false)
   const [keyword, setKeyword] = useState('')
   const [searchResult, setSearchResult] = useState([])
+  const [isFullScreenEnabled, setIsFullScreenEnabled] = useState(false)
   /** 书籍内容 */
   const [content, setContent] = useState('')
   const [textCache, setTextCache] = useState(null)
@@ -131,7 +132,12 @@ export default function Reader ({
     setKeyword('')
     setIsWaiting(false)
     ipcRenderer.send(STOP_SEARCH)
-    /** to-do: 取消全屏 */
+    handleToggleFullScreen(false)
+  }
+
+  const handleToggleFullScreen = (status: boolean) => {
+    setIsFullScreenEnabled(status)
+    ipcRenderer.send(TOGGLE_FULLSCREEN, status)
   }
   const [bookmarkCaller, setBookmarkCaller] = useState(0)
   const handleBookmark = (isRemoveEvent: boolean) => {
@@ -639,9 +645,25 @@ export default function Reader ({
           >
             <span className="reader-tool-tips">下一章</span>
           </i>
-          <i className="reader-tool common-active ri-fullscreen-line">
-            <span className="reader-tool-tips">全屏模式</span>
-          </i>
+          {
+            isFullScreenEnabled
+            ? (
+              <i
+                className="reader-tool common-active ri-fullscreen-exit-line"
+                onClick={ () => handleToggleFullScreen(false) }
+              >
+                <span className="reader-tool-tips">退出全屏</span>
+              </i>
+            )
+            : (
+              <i
+                className="reader-tool common-active ri-fullscreen-line"
+                onClick={ () => handleToggleFullScreen(true) }
+              >
+                <span className="reader-tool-tips">全屏模式</span>
+              </i>
+            )
+          }
         </div>
       </div>
       <div
