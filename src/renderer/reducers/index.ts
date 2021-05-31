@@ -3,9 +3,13 @@ import {
   UPDATE_LIBRARY,
   UPDATE_USERCONFIG,
 } from '../constants'
+import { ipcRenderer } from 'electron'
+import { SAVE_LIBRARY, SAVE_USERCONFIG } from '@constants'
 
 interface State {
   fonts: Array<string>
+  library: Library
+  userconfig: UserConfig
 }
 
 interface Action {
@@ -18,7 +22,24 @@ interface ActionMap {
 }
 
 const initialState: State = {
-  fonts: []
+  fonts: [],
+  library: {
+    shelf: [],
+    data: {}
+  },
+  userconfig: {
+    renderMode: 'page',
+    fontStyle: {
+      fontFamily: '微软雅黑',
+      fontSize: 18,
+      textIndent: 0,
+      lineHeight: 50
+    },
+    colorPlan: {
+      current: 0,
+      custom: ['#b7a1ff', '#2e003e']
+    }
+  },
 }
 
 export default function rootReducer (state = initialState, action: Action): State {
@@ -27,10 +48,16 @@ export default function rootReducer (state = initialState, action: Action): Stat
       return Object.assign({}, state, action.payload)
     },
     [UPDATE_LIBRARY] () {
-      return Object.assign({}, state, action.payload)
+      const newState = Object.assign({}, state, action.payload)
+      ipcRenderer.send(SAVE_LIBRARY, newState.library)
+
+      return newState
     },
     [UPDATE_USERCONFIG] () {
-      return Object.assign({}, state, action.payload)
+      const newState = Object.assign({}, state, action.payload)
+
+      ipcRenderer.send(SAVE_USERCONFIG, newState.userconfig)
+      return newState
     },
   }
 

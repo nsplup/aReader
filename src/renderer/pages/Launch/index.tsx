@@ -289,6 +289,7 @@ function Launch ({
         ipcRenderer={ ipcRenderer }
         handleToast={ setMessage }
         handleChangeLibrary={ updateLibrary }
+        handleChangeUserConfig={ updateUserConfig }
       />
       <div
         className="common-mask"

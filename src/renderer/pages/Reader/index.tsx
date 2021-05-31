@@ -81,6 +81,7 @@ interface Props {
   ipcRenderer: Electron.IpcRenderer
   handleToast: Function
   handleChangeLibrary: Function
+  handleChangeUserConfig: Function
 }
 
 export default function Reader ({
@@ -93,9 +94,10 @@ export default function Reader ({
   ipcRenderer,
   handleToast,
   handleChangeLibrary,
+  handleChangeUserConfig,
 }: Props): JSX.Element {
   /** 样式属性 */
-  const [renderMode, setRenderMode] = useState('page') /** 可选值：page/scroll */
+  const [renderMode, setRenderMode] = useState<'page' | 'scroll'>('page') /** 可选值：page/scroll */
 
   const [fontFamily, setFontFamily] = useState('微软雅黑')
   const [fontSize, setFontSize] = useState(18)
@@ -484,6 +486,38 @@ export default function Reader ({
   ])
 
   useEffect(() => {
+    const userconfig: UserConfig = {
+      renderMode,
+      fontStyle: {
+        fontFamily,
+        fontSize,
+        textIndent,
+        lineHeight
+      },
+      colorPlan: {
+        current: cColorPlan,
+        custom: [textColor, backgroundColor]
+      }
+    }
+    handleChangeUserConfig(userconfig)
+  }, [contentStyle, renderMode])
+
+  /** 从userconfig获取用户样式配置 */
+  useEffect(() => {
+    const { renderMode, fontStyle, colorPlan } = userconfig
+    const { fontFamily, fontSize, textIndent, lineHeight } = fontStyle
+    const { current, custom } = colorPlan
+    setRenderMode(renderMode)
+    setFontFamily(fontFamily)
+    setFontSize(fontSize)
+    setTextIndent(textIndent)
+    setLineHeight(lineHeight)
+    setCColorPlan(current)
+    setTextColor(custom[0])
+    setBackgroundColor(custom[1])
+  }, [userconfig])
+
+  useEffect(() => {
     const handleSearchResult = (event: Electron.IpcRendererEvent, result: any) => {
       const flatedResult: any = []
       setIsWaiting(false)
@@ -696,7 +730,7 @@ export default function Reader ({
                 min={12}
                 max={50}
                 step={0.38}
-                defaultValue={ fontSize }
+                value={ fontSize }
                 onChange={ (val: number) => setFontSize(val) }
               />
             </div>
@@ -704,7 +738,7 @@ export default function Reader ({
               <p className="s-m-title">首行缩进</p>
               <CustomSlider
                 max={100}
-                defaultValue={ textIndent }
+                value={ textIndent }
                 onChange={ (val: number) => setTextIndent(val) }
               />
             </div>
@@ -712,7 +746,7 @@ export default function Reader ({
               <p className="s-m-title">行距</p>
               <CustomSlider
                 max={100}
-                defaultValue={ lineHeight }
+                value={ lineHeight }
                 onChange={ (val: number) => setLineHeight(val) }
               />
             </div>

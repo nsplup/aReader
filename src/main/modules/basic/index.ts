@@ -15,6 +15,8 @@ import {
   SEARCH_RESULT,
   DELETE_BOOK,
   TOGGLE_FULLSCREEN,
+  SAVE_LIBRARY,
+  SAVE_USERCONFIG,
 } from '@constants'
 import fs from 'fs'
 import path from 'path'
@@ -22,6 +24,7 @@ import { Worker } from 'worker_threads'
 import { findFile } from '@utils/findFile'
 import { _Promise } from '@utils/promise-extends'
 import { recursiveDelete } from '@utils/recursiveDelete'
+import { debounce } from '@utils/debounce'
 
 
 function init () {
@@ -185,6 +188,38 @@ function init () {
   ipcMain.on(TOGGLE_FULLSCREEN, (event: Electron.IpcMainEvent, status) => {
     const win = BrowserWindow.getFocusedWindow()
     win.setFullScreen(status)
+  })
+
+  /** 保存library */
+  const handleSaveLibrary = debounce((library: Library) => {
+    const data = Object.entries(library.data)
+    const filtedData: any = {}
+
+    for (let i = 0, len = data.length; i < len; i++) {
+      const [hash, bookInfo] = data[i]
+      filtedData[hash] = { bookmark: bookInfo.bookmark }
+    }
+
+    fs.writeFile(
+      './data/.library',
+      JSON.stringify(Object.assign({}, library, { data: filtedData })),
+      (err) => { if (err) { console.log(err) } }
+    )
+  }, 1000)
+  ipcMain.on(SAVE_LIBRARY, (event: Electron.IpcMainEvent, library: Library) => {
+    handleSaveLibrary(library)
+  })
+
+  /** 保存userconfig */
+  const handleSaveUserConfig = debounce((userconfig: UserConfig) => {
+    fs.writeFile(
+      './data/.userconfig',
+      JSON.stringify(userconfig),
+      (err) => { if (err) { console.log(err) } }
+    )
+  }, 1000)
+  ipcMain.on(SAVE_USERCONFIG, (event: Electron.IpcMainEvent, userconfig: UserConfig) => {
+    handleSaveUserConfig(userconfig)
   })
 }
 
