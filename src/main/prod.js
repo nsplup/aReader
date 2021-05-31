@@ -1,9 +1,10 @@
 const { app, BrowserWindow, Menu } = require('electron')
 const { basic } = require('@/modules/basic')
-const path = require('path')
+
+let win
 
 function createWindow () {
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     title: '镜览',
     Width: 950,
     minWidth: 650,
@@ -39,3 +40,15 @@ app.on('window-all-closed', () => {
 basic.init()
 
 // Menu.setApplicationMenu(Menu.buildFromTemplate([])) /** 隐藏菜单栏 */
+const gotTheLock = app.requestSingleInstanceLock()
+if (!gotTheLock) {
+ app.quit()
+} else {
+ app.on('second-instance', (event, commandLine, workingDirectory) => {
+   if (win) {
+     if (win.isMinimized()) win.restore()
+     win.focus()
+     win.show()
+   }
+ })
+}
