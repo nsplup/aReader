@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, webFrame } = require('electron')
+const { app, BrowserWindow, Menu } = require('electron')
 const { basic } = require('@/modules/basic')
 
 let win
@@ -18,7 +18,6 @@ function createWindow () {
   })
   
   win.loadFile('./build/dist/prod/index.html')
-  webFrame.setZoomFactor(1)
 }
 
 app.whenReady()

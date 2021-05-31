@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { connect } from 'react-redux'
-import { ipcRenderer } from 'electron'
+import { ipcRenderer, webFrame } from 'electron'
 
 import {
   OPEN_DIALOG,
@@ -138,6 +138,7 @@ function Launch ({
     ipcRenderer.on(LOAD_LIBRARY, libraryListener)
     ipcRenderer.on(LOAD_USERCONFIG, userconfigListener)
     ipcRenderer.on(START_IMPORT, startImportListener)
+    webFrame.setZoomFactor(0.9)
 
     return () => {
       document.body.removeEventListener('contextmenu', handleContextmenu)
