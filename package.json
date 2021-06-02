@@ -1,6 +1,6 @@
 {
-  "name": "a-reader",
-  "version": "1.0.0",
+  "name": "areader",
+  "version": "1.0.2",
   "author": "Luke Pan",
   "main": "build/dist/prod/main.js",
   "build": {

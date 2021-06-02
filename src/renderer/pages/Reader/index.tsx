@@ -576,7 +576,8 @@ export default function Reader ({
           dangerouslySetInnerHTML={{
             __html: content
               .split(/[\r\n]+/)
-              .map(str => `<p>${str}</p>`)
+              .filter(line => /\S+/.test(line))
+              .map(str => `<p>${str.trim()}</p>`)
               .join('')
           }}
           ref={ renderEl }

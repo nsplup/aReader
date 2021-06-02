@@ -140,9 +140,14 @@ function init () {
             /** 去除标签 */
             .replace(/<script\b[^>]*>[\s\S]*<\/script>/g, '')
             .replace(/<\/?[^>]+>/g, fragment => {
-              return /^<\/?(ruby|rtc?|rp|rb)/.test(fragment)
-                ? fragment
-                : ''
+              switch (true) {
+                case /^<\/?(ruby|rtc?|rp|rb)/.test(fragment):
+                  return fragment
+                case /^<\/?(p|li)/.test(fragment):
+                  return '\n'
+                default:
+                  return ''
+              }
             })
           event.reply(LOAD_BOOK, { content, status: 'sucess', href, format, progress })
         })
