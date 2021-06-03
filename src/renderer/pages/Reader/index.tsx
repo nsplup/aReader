@@ -1020,7 +1020,7 @@ export default function Reader ({
                 const { href } = bookInfo.manifest[id]
                 const navLabel = typeof navMap.current[id] === 'string'
                   ? navMap.current[id]
-                  : href
+                  : `第 ${ spine + 1 } 章`
                 return (
                   <p
                     data-href={ href }

@@ -58,7 +58,7 @@ function loadEPUB (filePath, res, rej) {
                   const content = fxp.parse(data, option).package
                   const { metadata, manifest, spine } = content
                   const cover = [].concat(metadata.meta)
-                    .filter((meta) => meta.name === 'cover')[0]
+                    .filter((meta) => meta && meta.name === 'cover')[0]
 
                   /** 获取标题 */
                   infomation.title = metadata['dc:title']
@@ -70,7 +70,8 @@ function loadEPUB (filePath, res, rej) {
                     let temp = {}
                     for (let i = 0, len = manifest.item.length; i < len; i++) {
                       const item = manifest.item[i]
-                      const { href, id } = item
+                      let { href, id } = item
+                      href = href.split('#')[0]
                       temp[id] = {
                         href,
                         'media-type': item['media-type']
@@ -129,7 +130,7 @@ function loadEPUB (filePath, res, rej) {
 
                   /** 获取目录 */
                   fs.readFile(
-                    findFile('toc.ncx', bookPath)[0],
+                    findFile('toc.ncx', bookPath)[0] || '',
                     { encoding: 'utf8' },
                     (err, data) => {
                       let nav
@@ -138,15 +139,16 @@ function loadEPUB (filePath, res, rej) {
                         nav = []
                       } else {
                         /** 目录转化 */
-                        const formatNav = (navPoints, isSub = false) => {
-                          let results = [];
+                        const formatNav = (navPoints, isSub = false, pHad = []) => {
+                          let results = []
+                          const had = [].concat(pHad)
                           navPoints = [].concat(navPoints)
   
                           for (let i = 0, len = navPoints.length; i < len; i++) {
                             const { navLabel, content, navPoint } = navPoints[i]
-                            const href = content.src
+                            const href = content.src.split('#')[0]
                             const id = manifestMap[href]
-                            if (infomation.spine.includes(id)) {
+                            if (infomation.spine.includes(id) && !had.includes(href)) {
                               let navData = {
                                 id,
                                 navLabel: navLabel.text,
@@ -154,8 +156,9 @@ function loadEPUB (filePath, res, rej) {
                                 isSub
                               }
                               results.push(navData)
+                              had.push(href)
                               if (typeof navPoint === 'object') {
-                                results.push(...formatNav(navPoint, true))
+                                results.push(...formatNav(navPoint, true, had))
                               }
                             }
                           }
