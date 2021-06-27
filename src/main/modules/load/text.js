@@ -69,8 +69,8 @@ function loadTEXT (filePath, res, rej) {
                 if (regExp.test(line)) {
                   if (chunk.length > 0) {
                     chunks.push(chunk)
-                    chunk = [navLabelMark]
                   }
+                  chunk = [navLabelMark]
                 }
                 chunk.push(line)
               }

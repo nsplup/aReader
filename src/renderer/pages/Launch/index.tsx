@@ -86,11 +86,14 @@ function Launch ({
   }
   const handleDelete = () => {
     const hash = hashCache.current
-    let { shelf } = library
+    let { shelf, data } = library
+
+    data = Object.assign({}, data)
 
     shelf = shelf.filter(n => n !== hash)
+    delete data[hash]
 
-    updateLibrary(Object.assign({}, library, { shelf }))
+    updateLibrary(Object.assign({}, library, { shelf, data }))
     handleCloseCMenu()
     ipcRenderer.send(DELETE_BOOK, hash)
   }
