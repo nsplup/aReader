@@ -202,7 +202,7 @@ function Launch ({
         }}
       >
         <button className="flex-box common-button common-active" onClick={ handleOpenDialog }>
-          <i className="ri-file-add-line"></i>
+          {/* <i className="ri-file-add-line"></i> */}
           导入书籍
         </button>
         {/* <section
@@ -262,7 +262,7 @@ function Launch ({
           }}
         >
           <img src={ illustration } width="400" draggable="false"/>
-          <p className="common-description">书图镜览，辞章讨论。</p>
+          <p className="common-description">大白若辱，大方无隅，大器晚成，大音希声，大象无形。</p>
         </div>
         {/* 底部 Logo */}
         <div
