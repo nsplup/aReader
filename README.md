@@ -43,7 +43,7 @@
   - ✅进度
   - ✅跳转
   - ✅全屏模式
-  - 快捷键（N/Prev，M/Next）
+  - ✅快捷键（N/Prev，M/Next）
 - 💡格式支持
   - ✅EPUB
   - ✅TEXT

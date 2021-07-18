@@ -173,22 +173,25 @@ export default function Reader ({
 
     return Math.ceil((scrollWidth - offsetWidth) / (offsetWidth + 60))
   }
-  const handleWheel = (e: React.WheelEvent) => {
-    const { deltaY } = e
+  const handleChangeRenderCount = (offset: number) => {
     if (renderMode === 'page') {
       const totalCount = computTotalRenderCount()
       const computedCount = Math.max(
         0,
         Math.min(
-          deltaY > 0
-            ? renderCount + 1
-            : renderCount - 1,
+          renderCount + offset,
           totalCount
         )
       )
       setRenderCount(computedCount)
       setProgress(computedCount / totalCount)
     }
+  }
+  const handleWheel = (e: React.WheelEvent) => {
+    const { deltaY } = e
+    handleChangeRenderCount(
+      deltaY > 0 ? 1 : -1
+    )
   }
   const handleScroll = () => {
     if (renderMode === 'scroll') {
@@ -281,7 +284,7 @@ export default function Reader ({
     }
   }
 
-  const handleChangePage = (offset: number) => {
+  const handleChangePage = (offset: number, progress = 0) => {
     const { spine, manifest } = bookInfo
     offset = Math.min(
       spine.length - 1,
@@ -290,7 +293,7 @@ export default function Reader ({
 
     /** 处理边界情况 */
     if (offset !== pageNumber) {
-      handleJump(manifest[spine[offset]].href)
+      handleJump(manifest[spine[offset]].href, progress)
       setPageNumber(offset)
     }
   }
@@ -405,6 +408,7 @@ export default function Reader ({
     }
   }, [progress])
 
+  /** 获取书籍数据并跳转到相关章节 */
   useEffect(() => {
     if (typeof library === 'object' && currentBookHash.length > 0 && isReaderActive) {
       const bookData = Object.assign({}, defaultInfo, library.data[currentBookHash])
@@ -424,8 +428,50 @@ export default function Reader ({
     }
   }, [isReaderActive])
 
+  /** 快捷键支持，N: 上一页; M: 下一页 */
   useEffect(() => {
-    /** 构建映射表 */
+    function hotkeySupport (e: KeyboardEvent) {
+      if (isReaderActive) {
+        const { key } = e
+        const offset = (key.toLocaleUpperCase() === 'N' && -1) || (key.toLocaleUpperCase() === 'M' && 1)
+        
+        if (typeof offset === 'boolean') { return }
+        if (renderMode === 'page') {
+          if (offset === 1 && renderCount === computTotalRenderCount()) {
+            handleChangePage(1)
+            return
+          } else if (offset === -1 && renderCount === 0) {
+            handleChangePage(-1, 1)
+            return
+          }
+          handleChangeRenderCount(offset)
+        } else if (renderMode === 'scroll') {
+          const { current } = contentEl
+          const { offsetHeight, scrollHeight, scrollTop } = current
+          const computedScrollHeight = scrollHeight - offsetHeight
+          const distance = parseInt(window.getComputedStyle(current)['lineHeight'])
+          const rate = Math.ceil((scrollTop + (distance * offset * 5)) / distance)
+
+          if (offset === 1 && (computedScrollHeight - scrollTop) < 1) {
+            handleChangePage(1)
+            return
+          } else if (offset === -1 && scrollTop === 0) {
+            handleChangePage(-1, 1)
+            return
+          }
+          current.scrollTo({ top: distance * rate, behavior: 'smooth' })
+        }
+      }
+    }
+
+    window.addEventListener('keyup', hotkeySupport)
+    return () => {
+      window.removeEventListener('keyup', hotkeySupport)
+    }
+  }, [isReaderActive, renderMode, pageNumber, renderCount])
+
+  /** 构建映射表 */
+  useEffect(() => {
     navMap.current = {}
     bookInfo.nav.forEach(({ id, navLabel }) => { navMap.current[id] = navLabel })
 
@@ -456,7 +502,7 @@ export default function Reader ({
     }
   }, [bookInfo])
 
-  /** 相应样式变更 */
+  /** 响应样式变更 */
   const [contentStyle, setContentStyle] = useState({})
   const handleChangeStyle = debounce(() => {
     const multiple = fontSize / 18
@@ -485,6 +531,7 @@ export default function Reader ({
     fontFamily, fontSize, textIndent, lineHeight, textColor, backgroundColor, cColorPlan
   ])
 
+  /** 保存 .userconfig 设置 */
   useEffect(() => {
     const userconfig: UserConfig = {
       renderMode,
@@ -517,6 +564,7 @@ export default function Reader ({
     setBackgroundColor(custom[1])
   }, [userconfig])
 
+  /** 搜索结果反馈 */
   useEffect(() => {
     const handleSearchResult = (event: Electron.IpcRendererEvent, result: any) => {
       const flatedResult: any = []
