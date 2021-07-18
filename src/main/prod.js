@@ -39,7 +39,7 @@ app.on('window-all-closed', () => {
 
 basic.init()
 
-// Menu.setApplicationMenu(Menu.buildFromTemplate([])) /** 隐藏菜单栏 */
+Menu.setApplicationMenu(Menu.buildFromTemplate([])) /** 隐藏菜单栏 */
 const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
  app.quit()

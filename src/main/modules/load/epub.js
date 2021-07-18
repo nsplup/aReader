@@ -4,6 +4,7 @@ const path = require('path')
 const fs = require('fs')
 const findFile = require('./findFile')
 const getFileMimeType = require('./getFileMimeType')
+const convertImageToDataURL = require('./convertImageToDataURL')
 
 const dirName = path.resolve('.', 'data')
 const _7zbin = path.resolve('./resources/app/node_modules/7zip/7zip-lite/7z.exe')
@@ -100,9 +101,10 @@ function loadEPUB (filePath, res, rej) {
 
                     if (coverPath.length > 0) {
                       const buffer = fs.readFileSync(coverPath[0])
+                      const mimeType = getFileMimeType(buffer)
                       /** 文件头检测 */
-                      if (['bmp', 'gif', 'jpg', 'png', 'webp'].includes(getFileMimeType(buffer))) {
-                        infomation.cover = coverPath[0]
+                      if (['bmp', 'gif', 'jpg', 'png', 'webp'].includes(mimeType)) {
+                        infomation.cover = convertImageToDataURL(buffer, mimeType)
                       }
                     }
                   }

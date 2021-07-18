@@ -18,7 +18,17 @@ export default function Book ({ hash, cover, title, format, progress }: CInfomat
       <div className="flex-box book-cover">
         {
           cover
-            ? (<img src={ cover } width="100%" draggable="false"/>)
+            ? (
+              <div style={{
+                width: '100%',
+                height: '100%',
+
+                backgroundImage: `url(${cover})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}>
+              </div>
+            )
             : (<img src={ placeholder } width="80" draggable="false"/>)
         }
       </div>
