@@ -47,14 +47,14 @@ const ColorPlanRender = (text: string, background: string, index: number, curren
 )
 
 const colorPlan = [
-  ['#000000', '#ffffff'],
+  ['#393939', '#ffffff'],
   ['#393939', '#efebdf'],
   ['#393939', '#e7d7bd'],
   ['#393939', '#deebcf'],
   ['#282828', '#a4a6a3'],
   ['#9c9a9d', '#000000'],
   ['#adadb5', '#29354b'],
-  ['#324553', '#080b10'],
+  ['#5d788c', '#080b10'],
 ]
 
 const defaultInfo: Infomation = {
@@ -210,10 +210,14 @@ export default function Reader ({
     }
     setRenderCount(0)
     handleRestScroll()
+    setProgress(0)
   }
   const handleResize = () => {
     if (renderMode === 'page') {
-      setRenderCount(Math.floor(progress * computTotalRenderCount()))
+      const totalCount = computTotalRenderCount()
+      const computedCount = Math.floor(progress * totalCount)
+      setRenderCount(computedCount)
+      setProgress(computedCount / totalCount)
     }
   }
 
@@ -261,10 +265,32 @@ export default function Reader ({
     }
   }
 
+  const mouseEventTimer = useRef(null)
+  const DELAY = 3000
+  const [isToolsActive, setIsToolsActive] = useState(false)
+  const handleMouseMoveTools = () => {
+    clearTimeout(mouseEventTimer.current)
+    setIsToolsActive(true)
+
+    mouseEventTimer.current = setTimeout(() => {
+      setIsToolsActive(false)
+    }, DELAY)
+  }
+  const handleMouseEnterTools = () => {
+    clearTimeout(mouseEventTimer.current)
+    setIsToolsActive(true)
+  }
+  const handleMouseLeaveTools = () => {
+    mouseEventTimer.current = setTimeout(() => {
+      setIsToolsActive(false)
+    }, DELAY)
+  }
+
   const navList = useRef(null)
   const handleOpenNavList = () => {
     const { current } = navList
     setSMenuStatus('nav')
+    setIsToolsActive(false)
     current.scrollToItem(pageNumber)
   }
 
@@ -431,7 +457,7 @@ export default function Reader ({
   /** 快捷键支持，N: 上一页; M: 下一页 */
   useEffect(() => {
     function hotkeySupport (e: KeyboardEvent) {
-      if (isReaderActive) {
+      if (isReaderActive && sMenuStatus === null) {
         const { key } = e
         const offset = (key.toLocaleUpperCase() === 'N' && -1) || (key.toLocaleUpperCase() === 'M' && 1)
         
@@ -468,7 +494,7 @@ export default function Reader ({
     return () => {
       window.removeEventListener('keyup', hotkeySupport)
     }
-  }, [isReaderActive, renderMode, pageNumber, renderCount])
+  }, [isReaderActive, renderMode, pageNumber, renderCount, sMenuStatus])
 
   /** 构建映射表 */
   useEffect(() => {
@@ -606,6 +632,8 @@ export default function Reader ({
         ref={ contentEl }
         onWheel={ handleWheel }
         onScroll={ handleScroll }
+        onMouseMove={ handleMouseMoveTools }
+        onClick={ () => { setIsToolsActive(false); clearTimeout(mouseEventTimer.current) } }
         style={ contentStyle }
       >
         <div
@@ -616,8 +644,8 @@ export default function Reader ({
             bottom: 0,
             width: progress * 100 + '%',
             height: '6px',
-            backgroundColor: '#72047f',
-            transition: 'width 0.3s ease 0s',
+            backgroundColor: cColorPlan === -1 ? textColor : colorPlan[cColorPlan][0],
+            transition: 'width .3s ease, background .3s ease',
           }}
         ></div>
         <div
@@ -636,118 +664,118 @@ export default function Reader ({
           }}
         ></div>
       </div>
-      <div className="flex-box reader-toolbar">
-        <div
+      <div
+        className={
+          classNames(
+            'flex-box reader-tools',
+              { 'reader-tools-focus': isToolsActive || (sMenuStatus !== null && sMenuStatus !== 'nav') }
+            )
+          }
+        onMouseEnter={ handleMouseEnterTools }
+        onMouseLeave={ handleMouseLeaveTools }
+      >
+        <i className="reader-tool common-active ri-arrow-left-line" onClick={ handleCloseReader }>
+          <span className="reader-tool-tips">返回</span>
+        </i>
+        {
+          bookInfo.bookmark.detail.some(([spine, prog]) => 
+          spine === pageNumber && (Math.abs((prog * 100) - (progress * 100)) < 3)
+        )
+          ? (
+            <i
+              className="reader-tool common-active ri-bookmark-fill reader-tool-enabled"
+              onClick={ () => handleBookmark(true) }
+            >
+              <span className="reader-tool-tips">移除书签</span>
+            </i>
+          )
+          : (
+            <i
+              className="reader-tool common-active ri-bookmark-line"
+              onClick={ () => handleBookmark(false) }
+            >
+              <span className="reader-tool-tips">插入书签</span>
+            </i>
+          )
+        }
+        <i
           className={
             classNames(
-              'flex-box reader-tools',
-              { 'reader-tools-focus': sMenuStatus !== null && sMenuStatus !== 'nav' }
+              'reader-tool common-active ri-file-paper-2-line',
+              { 'reader-tool-enabled': renderMode === 'scroll' }
             )
           }
+          onClick={ handleToggleRenderMode }
         >
-          <i className="reader-tool common-active ri-arrow-left-line" onClick={ handleCloseReader }>
-            <span className="reader-tool-tips">返回</span>
-          </i>
           {
-            bookInfo.bookmark.detail.some(([spine, prog]) => 
-              spine === pageNumber && (Math.abs((prog * 100) - (progress * 100)) < 3)
-            )
-              ? (
-                <i
-                  className="reader-tool common-active ri-bookmark-fill reader-tool-enabled"
-                  onClick={ () => handleBookmark(true) }
-                >
-                  <span className="reader-tool-tips">移除书签</span>
-                </i>
-              )
-              : (
-                <i
-                  className="reader-tool common-active ri-bookmark-line"
-                  onClick={ () => handleBookmark(false) }
-                >
-                  <span className="reader-tool-tips">插入书签</span>
-                </i>
-              )
+            renderMode === 'scroll'
+            ? (<span className="reader-tool-tips">分页模式</span>)
+            : (<span className="reader-tool-tips">滚动模式</span>)
           }
-          <i
-            className={
-              classNames(
-                'reader-tool common-active ri-file-paper-2-line',
-                { 'reader-tool-enabled': renderMode === 'scroll' }
-              )
-            }
-            onClick={ handleToggleRenderMode }
-          >
+        </i>
+        <i className="reader-tool common-active ri-list-unordered" onClick={ handleOpenNavList }>
+          <span className="reader-tool-tips">目录</span>
+        </i>
+        <i className="reader-tool common-active ri-text" onClick={ handleOpenFontStyle }>
+          <span className="reader-tool-tips">字体样式</span>
+        </i>
+        <i className="reader-tool common-active ri-palette-fill" onClick={() => setSMenuStatus('color')}>
+          <span className="reader-tool-tips">配色方案</span>
+        </i>
+        <i className="reader-tool common-active ri-search-line" onClick={() => setSMenuStatus('search')}>
+          <span className="reader-tool-tips">全文检索</span>
+        </i>
+        <i
+          className={
+            classNames(
+              'reader-tool common-active ri-skip-back-fill',
+              { 'reader-tool-disabled': pageNumber === 0 },
+            )
+          }
+          onClick={() => handleChangePage(-1)}
+        >
+          <span className="reader-tool-tips">上一章</span>
+        </i>
+        <span className="reader-tool flex-box reader-pnum">
+          <Flipping value={ pageNumber + 1 }/>
+          <span className="reader-tool-tips">
             {
-              renderMode === 'scroll'
-              ? (<span className="reader-tool-tips">分页模式</span>)
-              : (<span className="reader-tool-tips">滚动模式</span>)
+              Math.floor((pageNumber + 1) / bookInfo.spine.length * 100) === 0
+              ? '1%'
+              : Math.floor((pageNumber + 1) / bookInfo.spine.length * 100) + '%'
             }
-          </i>
-          <i className="reader-tool common-active ri-list-unordered" onClick={ handleOpenNavList }>
-            <span className="reader-tool-tips">目录</span>
-          </i>
-          <i className="reader-tool common-active ri-text" onClick={ handleOpenFontStyle }>
-            <span className="reader-tool-tips">字体样式</span>
-          </i>
-          <i className="reader-tool common-active ri-palette-fill" onClick={() => setSMenuStatus('color')}>
-            <span className="reader-tool-tips">配色方案</span>
-          </i>
-          <i className="reader-tool common-active ri-search-line" onClick={() => setSMenuStatus('search')}>
-            <span className="reader-tool-tips">全文检索</span>
-          </i>
-          <i
-            className={
-              classNames(
-                'reader-tool common-active ri-skip-back-fill',
-                { 'reader-tool-disabled': pageNumber === 0 },
-              )
-            }
-            onClick={() => handleChangePage(-1)}
-          >
-            <span className="reader-tool-tips">上一章</span>
-          </i>
-          <span className="reader-tool flex-box reader-pnum">
-            <Flipping value={ pageNumber + 1 }/>
-            <span className="reader-tool-tips">
-              {
-                Math.floor((pageNumber + 1) / bookInfo.spine.length * 100) === 0
-                ? '1%'
-                : Math.floor((pageNumber + 1) / bookInfo.spine.length * 100) + '%'
-              }
-            </span>
           </span>
-          <i
-            className={
-              classNames(
-                'reader-tool common-active ri-skip-forward-fill',
-                { 'reader-tool-disabled': pageNumber === (bookInfo.spine.length - 1) },
-              )
-            }
-            onClick={() => handleChangePage(1)}
-          >
-            <span className="reader-tool-tips">下一章</span>
-          </i>
-          {
-            isFullScreenEnabled
-            ? (
-              <i
-                className="reader-tool common-active ri-fullscreen-exit-line"
-                onClick={ () => handleToggleFullScreen(false) }
-              >
-                <span className="reader-tool-tips">退出全屏</span>
-              </i>
-            )
-            : (
-              <i
-                className="reader-tool common-active ri-fullscreen-line"
-                onClick={ () => handleToggleFullScreen(true) }
-              >
-                <span className="reader-tool-tips">全屏模式</span>
-              </i>
+        </span>
+        <i
+          className={
+            classNames(
+              'reader-tool common-active ri-skip-forward-fill',
+              { 'reader-tool-disabled': pageNumber === (bookInfo.spine.length - 1) },
             )
           }
-        </div>
+          onClick={() => handleChangePage(1)}
+        >
+          <span className="reader-tool-tips">下一章</span>
+        </i>
+        {
+          isFullScreenEnabled
+          ? (
+            <i
+              className="reader-tool common-active ri-fullscreen-exit-line"
+              onClick={ () => handleToggleFullScreen(false) }
+            >
+              <span className="reader-tool-tips">退出全屏</span>
+            </i>
+          )
+          : (
+            <i
+              className="reader-tool common-active ri-fullscreen-line"
+              onClick={ () => handleToggleFullScreen(true) }
+            >
+              <span className="reader-tool-tips">全屏模式</span>
+            </i>
+          )
+        }
       </div>
       <div
         className="common-mask"

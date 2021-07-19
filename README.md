@@ -4,7 +4,7 @@
 
 <p align="center">这个应用使用了<b>Electron</b></p>
 
-[![screenshot](https://z3.ax1x.com/2021/07/18/W8K94f.png)](https://imgtu.com/i/W8K94f)
+[![WYiaND.png](https://z3.ax1x.com/2021/07/19/WYiaND.png)](https://imgtu.com/i/WYiaND)
 
 # Unsupported
 
