@@ -10,14 +10,18 @@ function matchAll (haystack, needle) {
   const result = []
   let index = 0
 
+  haystack = haystack.toLowerCase()
+  needle = needle.toLowerCase()
+
   while ((index + needle.length) <= haystack.length) {
     let n = haystack.slice(index).indexOf(needle)
 
-    if (n > 0) {
+    if (n >= 0) {
       result.push(n + index)
-      index += n
+      index += n + needle.length
+    } else {
+      index++
     }
-    index += needle.length
   }
 
   return result
