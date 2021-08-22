@@ -52,78 +52,78 @@ function init () {
   
   /** 获取字体列表 */
   ipcMain.on(WINDOW_READY, (event: Electron.IpcMainEvent) => {
+    /** 读取.library如果不存在则创建 */
+    fs.readFile('./data/.library', { encoding: 'utf-8' }, (err, data) => {
+      let library: Library
+      if (err) {
+        library = {
+          shelf: [],
+          data: {}
+        }
+        fs.writeFile('./data/.library', JSON.stringify(library), (err) => {
+          if (err) { console.log(err) }
+        })
+        event.reply(LOAD_LIBRARY, library)
+      } else {
+        library = JSON.parse(data)
+        const tasks: any = []
+
+        if (library.shelf.length === 0) {
+          event.reply(LOAD_LIBRARY, library)
+        } else {
+          library.shelf.forEach(hash => {
+            tasks.push(new Promise((res, rej) => {
+              fs.readFile(path.resolve('./data', hash, '.infomation'), { encoding: 'utf-8' }, (err, data) => {
+                if (err) {
+                  rej(hash)
+                } else {
+                  res(JSON.parse(data))
+                }
+              })
+            }))
+          })
+          _Promise
+            .finish(tasks)
+            .then(({ resolve, reject }) => {
+              resolve.forEach((infomation: Infomation) => {
+                const { hash } = infomation
+                
+                library.data[hash] = Object.assign({}, library.data[hash], infomation)
+              })
+              library.shelf = library.shelf.filter(hash => !reject.includes(hash))
+              event.reply(LOAD_LIBRARY, library)
+            })
+        }
+      }
+    })
+    /** 读取.userconfig如果不存在则创建 */
+    fs.readFile('./data/.userconfig', { encoding: 'utf-8' }, (err, data) => {
+      let userconfig: UserConfig
+      if (err) {
+        userconfig = {
+          renderMode: 'page',
+          fontStyle: {
+            fontFamily: '微软雅黑',
+            fontSize: 18,
+            textIndent: 0,
+            lineHeight: 50,
+          },
+          colorPlan: {
+            current: 0,
+            custom: ['#b7a1ff', '#2e003e']
+          }
+        }
+        fs.writeFile('./data/.userconfig', JSON.stringify(userconfig), (err) => {
+          if (err) { console.log(err) }
+        })
+      } else {
+        userconfig = JSON.parse(data)
+      }
+      event.reply(LOAD_USERCONFIG, userconfig)
+    })
     getFonts({ disableQuoting: true })
       .then(fonts => {
         event.reply(FONTS_READY, fonts)
-        /** 读取.library如果不存在则创建 */
-        fs.readFile('./data/.library', { encoding: 'utf-8' }, (err, data) => {
-          let library: Library
-          if (err) {
-            library = {
-              shelf: [],
-              data: {}
-            }
-            fs.writeFile('./data/.library', JSON.stringify(library), (err) => {
-              if (err) { console.log(err) }
-            })
-            event.reply(LOAD_LIBRARY, library)
-          } else {
-            library = JSON.parse(data)
-            const tasks: any = []
-
-            if (library.shelf.length === 0) {
-              event.reply(LOAD_LIBRARY, library)
-            } else {
-              library.shelf.forEach(hash => {
-                tasks.push(new Promise((res, rej) => {
-                  fs.readFile(path.resolve('./data', hash, '.infomation'), { encoding: 'utf-8' }, (err, data) => {
-                    if (err) {
-                      rej(hash)
-                    } else {
-                      res(JSON.parse(data))
-                    }
-                  })
-                }))
-              })
-              _Promise
-                .finish(tasks)
-                .then(({ resolve, reject }) => {
-                  resolve.forEach((infomation: Infomation) => {
-                    const { hash } = infomation
-                    
-                    library.data[hash] = Object.assign({}, library.data[hash], infomation)
-                  })
-                  library.shelf = library.shelf.filter(hash => !reject.includes(hash))
-                  event.reply(LOAD_LIBRARY, library)
-                })
-            }
-          }
-        })
-        /** 读取.userconfig如果不存在则创建 */
-        fs.readFile('./data/.userconfig', { encoding: 'utf-8' }, (err, data) => {
-          let userconfig: UserConfig
-          if (err) {
-            userconfig = {
-              renderMode: 'page',
-              fontStyle: {
-                fontFamily: '微软雅黑',
-                fontSize: 18,
-                textIndent: 0,
-                lineHeight: 50,
-              },
-              colorPlan: {
-                current: 0,
-                custom: ['#b7a1ff', '#2e003e']
-              }
-            }
-            fs.writeFile('./data/.userconfig', JSON.stringify(userconfig), (err) => {
-              if (err) { console.log(err) }
-            })
-          } else {
-            userconfig = JSON.parse(data)
-          }
-          event.reply(LOAD_USERCONFIG, userconfig)
-        })
       })
   })
 

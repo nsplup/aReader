@@ -572,7 +572,7 @@ export default function Reader ({
         custom: [textColor, backgroundColor]
       }
     }
-    handleChangeUserConfig(userconfig)
+    handleChangeUserConfig(userconfig, true)
   }, [contentStyle, renderMode])
 
   /** 从userconfig获取用户样式配置 */

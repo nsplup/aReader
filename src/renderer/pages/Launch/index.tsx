@@ -330,7 +330,7 @@ const mapStateToProps = ({ fonts, library, userconfig }: any) => ({ fonts, libra
 const mapDispatchToProps = (dispatch: any) => ({
   generateFonts: (fonts: Array<string>) => dispatch(generateFonts(fonts)),
   updateLibrary: (library: Library) => dispatch(updateLibrary(library)),
-  updateUserConfig: (userconfig: UserConfig) => dispatch(updateUserConfig(userconfig))
+  updateUserConfig: (userconfig: UserConfig, shouldSave = false) => dispatch(updateUserConfig({ userconfig, shouldSave }))
 })
 const connectedLaunch = connect(mapStateToProps, mapDispatchToProps)(Launch)
 

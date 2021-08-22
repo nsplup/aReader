@@ -12,8 +12,8 @@ function updateLibrary (library: Library) {
   return { type: UPDATE_LIBRARY, payload: { library } }
 }
 
-function updateUserConfig (userconfig: UserConfig) {
-  return { type: UPDATE_USERCONFIG, payload: { userconfig } }
+function updateUserConfig ({ userconfig, shouldSave }: { userconfig: UserConfig; shouldSave: boolean }) {
+  return { type: UPDATE_USERCONFIG, payload: { userconfig }, shouldSave }
 }
 
 export {

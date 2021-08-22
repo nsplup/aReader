@@ -15,6 +15,7 @@ interface State {
 interface Action {
   type: string
   payload: { [key: string]: any }
+  shouldSave?: boolean
 }
 
 interface ActionMap {
@@ -56,7 +57,9 @@ export default function rootReducer (state = initialState, action: Action): Stat
     [UPDATE_USERCONFIG] () {
       const newState = Object.assign({}, state, action.payload)
 
-      ipcRenderer.send(SAVE_USERCONFIG, newState.userconfig)
+      if (action.shouldSave) {
+        ipcRenderer.send(SAVE_USERCONFIG, newState.userconfig)
+      }
       return newState
     },
   }
