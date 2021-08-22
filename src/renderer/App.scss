@@ -227,6 +227,10 @@ body, html, #root {
     word-break: break-word;
   }
 
+  & rt, & rtc {
+    font-size: 70%;
+  }
+
   &-scroll {
     overflow-y: auto;
 
