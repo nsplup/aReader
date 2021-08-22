@@ -633,6 +633,7 @@ export default function Reader ({
         onWheel={ handleWheel }
         onScroll={ handleScroll }
         onMouseMove={ handleMouseMoveTools }
+        onMouseLeave= { () => { setIsToolsActive(false) } }
         onClick={ () => { setIsToolsActive(false); clearTimeout(mouseEventTimer.current) } }
         style={ contentStyle }
       >
