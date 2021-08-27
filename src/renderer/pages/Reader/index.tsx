@@ -5,6 +5,8 @@ import AutoSizer from "react-virtualized-auto-sizer"
 import Slider from 'react-slider'
 import { classNames } from '@utils/classNames'
 import { debounce } from '@utils/debounce'
+import { formatTime } from '@utils/formatTime'
+import { throttle } from '@utils/throttle'
 import { LOAD_BOOK, READ_BOOK, SEARCH_RESULT, START_SEARCH, STOP_SEARCH, TOGGLE_FULLSCREEN } from '@constants'
 
 import Flipping from './Flipping'
@@ -265,12 +267,15 @@ export default function Reader ({
     }
   }
 
+  const [time, setTime] = useState(0)
+  const setTimeWithThrottle = throttle(() => setTime(Date.now()), 300)
   const mouseEventTimer = useRef(null)
   const DELAY = 3000
   const [isToolsActive, setIsToolsActive] = useState(false)
   const handleMouseMoveTools = () => {
     clearTimeout(mouseEventTimer.current)
     setIsToolsActive(true)
+    setTimeWithThrottle()
 
     mouseEventTimer.current = setTimeout(() => {
       setIsToolsActive(false)
@@ -530,6 +535,11 @@ export default function Reader ({
 
   /** 响应样式变更 */
   const [contentStyle, setContentStyle] = useState({})
+  const [styleCSS, setStyleCSS] = useState({
+    color: '',
+    backgroundColor: '',
+    cursor: '',
+  })
   const handleChangeStyle = debounce(() => {
     const multiple = fontSize / 18
     const computedTextIndent = textIndent / 10 / multiple
@@ -552,10 +562,40 @@ export default function Reader ({
       lineHeight: 150 + lineHeight + '%',
       backgroundColor: bgColor
     }))
+    setStyleCSS(CSS => Object.assign({}, CSS, { color, backgroundColor: bgColor }))
   }, 150)
   useEffect(handleChangeStyle, [
     fontFamily, fontSize, textIndent, lineHeight, textColor, backgroundColor, cColorPlan
   ])
+
+  useEffect(() => {
+    setStyleCSS(CSS => Object.assign({}, CSS, { cursor: isToolsActive || sMenuStatus !== null ? 'auto' : 'none' }))
+  }, [isToolsActive, sMenuStatus])
+  const generateCSSText = (CSS: { color: string; backgroundColor: string; cursor: string }) => {
+    const { color, backgroundColor, cursor } = CSS
+    return `
+    .reader-wrapper * { cursor: ${cursor} };
+    .reader-content::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+      background-color: transparent;
+    }
+    .reader-content::-webkit-scrollbar-track {
+      background-color: transparent;
+    }
+    .reader-content::-webkit-scrollbar-thumb {
+      border-radius: 10px;
+      background-color: ${color};
+    }
+    .reader-content::-webkit-scrollbar-button {
+      display: none;
+    }
+    .reader-content ::selection {
+      color: ${backgroundColor} !important;
+      background-color: ${color} !important;
+    }
+    `
+  }
 
   /** 保存 .userconfig 设置 */
   useEffect(() => {
@@ -620,6 +660,7 @@ export default function Reader ({
         )
       }
     >
+      <style dangerouslySetInnerHTML={{ __html: generateCSSText(styleCSS) }}></style>
       <div
         className={
           classNames(
@@ -645,7 +686,7 @@ export default function Reader ({
             bottom: 0,
             width: progress * 100 + '%',
             height: '6px',
-            backgroundColor: cColorPlan === -1 ? textColor : colorPlan[cColorPlan][0],
+            backgroundColor: styleCSS.color,
             transition: 'width .3s ease, background .3s ease',
           }}
         ></div>
@@ -664,6 +705,55 @@ export default function Reader ({
               : ''
           }}
         ></div>
+      </div>
+      <div
+        className={
+          classNames(
+            'flex-box reader-detail',
+              { 'reader-tools-focus': isToolsActive || (sMenuStatus !== null && sMenuStatus !== 'nav') }
+            )
+          }
+        onMouseEnter={ handleMouseEnterTools }
+        onMouseLeave={ handleMouseLeaveTools }
+      >
+        {
+          typeof library === 'object' && currentBookHash.length > 0
+          ? (
+            <>
+              <p
+                style={{
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  opacity: '0.8',
+                }}
+              >
+                {bookInfo.title}
+              </p>
+              <p
+                style={{
+                  position: 'absolute',
+                  bottom: '10px',
+                  width: 'calc(100% - 200px)',
+                  opacity: '0.6',
+                }}
+              >
+                {navMap.current[bookInfo.spine[pageNumber]]}
+              </p>
+              <p
+                style={{
+                  position: 'absolute',
+                  bottom: '10px',
+                  right: '10px',
+                  opacity: '0.6',
+                }}
+                title={new Date(time).toLocaleString()}
+              >
+                {formatTime(time, 'YYYY/MM/DD hh:mm')}
+              </p>
+            </>
+          )
+          : null
+        }
       </div>
       <div
         className={
