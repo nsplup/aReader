@@ -13,6 +13,7 @@ body, html, #root {
 
 * {
   font-family: Arial, "微软雅黑";
+  color: $common-text-main;
 }
 
 /*滚动条整体部分,必须要设置*/
@@ -123,7 +124,6 @@ body, html, #root {
 .launch-title {
   font-size: 20px;
   font-weight: bold;
-  color: $common-text-main;
 }
 
 .launch-content {
@@ -262,7 +262,6 @@ body, html, #root {
 
   border-radius: 10px;
 
-  color: $common-text-main;
   font-size: 15px;
   user-select: none;
 
@@ -573,7 +572,6 @@ body, html, #root {
     border: none;
     border-radius: 5px;
     outline: none;
-    color: $common-text-main;
     background-color: rgb(224 224 224);
     transform: translate3d(0, 0, 0);
   }
@@ -607,7 +605,6 @@ body, html, #root {
     padding-left: 40px;
     padding-right: 10px;
     border-radius: 10px;
-    color: $common-text-main;
     font-weight: bold;
     box-sizing: border-box;
     & p {
