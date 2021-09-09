@@ -134,6 +134,7 @@ function Launch ({
     const libraryListener = (event: Electron.IpcRendererEvent, library: Library) => {
       updateLibrary(library)
       setTimeout(() => document.querySelector('#startup').className = 'startup-end', 1000)
+      setTimeout(() => document.body.style.overflowY = 'auto', 1800)
     }
     /** 主线程请求用户数据事件 */
     const userconfigListener = (event: Electron.IpcRendererEvent, userconfig: UserConfig) => {

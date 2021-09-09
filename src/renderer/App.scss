@@ -5,6 +5,7 @@ body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 body, html, #root {
@@ -136,7 +137,7 @@ body, html, #root {
     float: left;
   
     width: 150px;
-    height: 250px;
+    height: 230px;
   
     margin-right: 20px;
   }
@@ -149,15 +150,40 @@ body, html, #root {
   
     background-color: $primary-color-pale;
   }
-  &-title {
+  &-mask {
+    position: absolute;
+    top: 0;
+
     width: 100%;
+    height: 200px;
+
+    border-radius: 10px;
+
+    background-image: linear-gradient(transparent 65%, rgb(65 65 65 / 78%))
+  }
+  &-title {
+    display: -webkit-box;
+    position: absolute;
+    bottom: 38px;
+    left: 0;
+    right: 0;
+
+    width: calc(100% - 10px);
+    overflow: hidden;
   
-    margin: 5px 0;
+    margin: 0 auto;
   
+    color: #ffffff;
     font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    text-overflow: ellipsis;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
   &-description {
     margin: 0;
+    margin-top: 8px;
   
     font-size: 13px;
     text-align: center;
@@ -166,11 +192,12 @@ body, html, #root {
   &-progress {
     position: absolute;
     right: 0;
-    bottom: 38.5px;
+    top: 0;
     width: 30px;
+    margin: 0;
     padding: 3px 5px;
-    border-top-left-radius: 8px;
-    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 8px;
+    border-top-right-radius: 10px;
     font-size: 12px;
     color: #ffffff;
     text-align: center;
@@ -835,10 +862,6 @@ body, html, #root {
     }
     &-2 {
       top: 207.5px;
-      height: 15px;
-    }
-    &-3 {
-      top: 230px;
       height: 15px;
     }
   }

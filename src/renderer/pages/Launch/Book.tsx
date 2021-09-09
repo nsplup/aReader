@@ -29,10 +29,11 @@ export default function Book ({ hash, cover, title, format, progress }: CInfomat
               }}>
               </div>
             )
-            : (<img src={ placeholder } width="80" draggable="false"/>)
+            : (<img src={ placeholder } width="80" style={{ marginBottom: '30px' }} draggable="false"/>)
         }
       </div>
-      <p className="common-ellipsis book-title">{ title }</p>
+      <div className="book-mask"></div>
+      <p className="book-title">{ title }</p>
       <p className="book-description">{ format }</p>
       <p className="book-progress">{ progress }</p>
     </div>

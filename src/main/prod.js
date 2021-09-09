@@ -18,6 +18,7 @@ function createWindow () {
   })
   
   win.loadFile('./build/dist/prod/index.html')
+  win.webContents.setZoomFactor(0.9)
   win.on('closed',() => {
     win = null
   })
@@ -26,8 +27,7 @@ function createWindow () {
 app.whenReady()
   .then(() => {
     createWindow()
-    win.webContents.setZoomFactor(0.9)
-    win.webContents.openDevTools()
+    // win.webContents.openDevTools()
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
