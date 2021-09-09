@@ -69,6 +69,7 @@ function Launch ({
       const bookHash = book.getAttribute('data-hash')
       setCurrentBook(bookHash)
       setIsReaderActive(true)
+      document.body.style.overflow = 'hidden'
     }
   }
 
@@ -188,10 +189,6 @@ function Launch ({
       ipcRenderer.off(IMPORT_BOOK, importBookListener)
     }
   }, [library])
-
-  useEffect(() => {
-    document.body.style.overflow = isReaderActive ? 'hidden' : ''
-  }, [isReaderActive])
 
   return (
     <>

@@ -137,6 +137,7 @@ export default function Reader ({
     setIsWaiting(false)
     ipcRenderer.send(STOP_SEARCH)
     handleToggleFullScreen(false)
+    document.body.style.overflow = 'auto'
   }
 
   const handleToggleFullScreen = (status: boolean) => {
@@ -186,7 +187,8 @@ export default function Reader ({
         )
       )
       setRenderCount(computedCount)
-      setProgress(computedCount / totalCount)
+      let prog = computedCount / totalCount
+      setProgress(isNaN(prog) ? 0 : prog)
     }
   }
   const handleWheel = (e: React.WheelEvent) => {
@@ -200,8 +202,9 @@ export default function Reader ({
       const { current } = contentEl
       const { scrollHeight, scrollTop, offsetHeight } = current
       const computedHeight = scrollHeight - offsetHeight
-  
-      setProgress(scrollTop / computedHeight)
+
+      let prog = scrollTop / computedHeight
+      setProgress(isNaN(prog) ? 0 : prog)
     }
   }
   const handleToggleRenderMode = () => {
@@ -219,7 +222,9 @@ export default function Reader ({
       const totalCount = computTotalRenderCount()
       const computedCount = Math.floor(progress * totalCount)
       setRenderCount(computedCount)
-      setProgress(computedCount / totalCount)
+
+      let prog = computedCount / totalCount
+      setProgress(isNaN(prog) ? 0 : prog)
     }
   }
 
@@ -459,7 +464,12 @@ export default function Reader ({
     }
   }, [isReaderActive])
 
-  /** 快捷键支持，N: 上一页; M: 下一页 */
+  /** 快捷键支持:
+   * ESC: 退出全屏模式
+   * F: 切换全屏模式
+   * N: 上一页
+   * M: 下一页
+   */
   useEffect(() => {
     function hotkeySupport (e: KeyboardEvent) {
       if (isReaderActive && sMenuStatus === null) {
