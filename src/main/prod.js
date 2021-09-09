@@ -18,12 +18,16 @@ function createWindow () {
   })
   
   win.loadFile('./build/dist/prod/index.html')
+  win.on('closed',() => {
+    win = null
+  })
 }
 
 app.whenReady()
   .then(() => {
     createWindow()
     win.webContents.setZoomFactor(0.9)
+    win.webContents.openDevTools()
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
@@ -40,7 +44,7 @@ app.on('window-all-closed', () => {
 
 basic.init()
 
-// Menu.setApplicationMenu(Menu.buildFromTemplate([])) /** 隐藏菜单栏 */
+Menu.setApplicationMenu(Menu.buildFromTemplate([])) /** 隐藏菜单栏 */
 const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
  app.quit()
