@@ -23,6 +23,7 @@ function createWindow () {
 app.whenReady()
   .then(() => {
     createWindow()
+    win.webContents.setZoomFactor(0.9)
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
