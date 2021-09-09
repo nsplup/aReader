@@ -464,33 +464,43 @@ export default function Reader ({
     function hotkeySupport (e: KeyboardEvent) {
       if (isReaderActive && sMenuStatus === null) {
         const { key } = e
-        const offset = (key.toLocaleUpperCase() === 'N' && -1) || (key.toLocaleUpperCase() === 'M' && 1)
-        
-        if (typeof offset === 'boolean') { return }
-        if (renderMode === 'page') {
-          if (offset === 1 && renderCount === computTotalRenderCount()) {
-            handleChangePage(1)
-            return
-          } else if (offset === -1 && renderCount === 0) {
-            handleChangePage(-1, 1)
-            return
-          }
-          handleChangeRenderCount(offset)
-        } else if (renderMode === 'scroll') {
-          const { current } = contentEl
-          const { offsetHeight, scrollHeight, scrollTop } = current
-          const computedScrollHeight = scrollHeight - offsetHeight
-          const distance = parseInt(window.getComputedStyle(current)['lineHeight'])
-          const rate = Math.ceil((scrollTop + (distance * offset * 5)) / distance)
-
-          if (offset === 1 && (computedScrollHeight - scrollTop) < 1) {
-            handleChangePage(1)
-            return
-          } else if (offset === -1 && scrollTop === 0) {
-            handleChangePage(-1, 1)
-            return
-          }
-          current.scrollTo({ top: distance * rate, behavior: 'smooth' })
+        switch (key.toLocaleUpperCase()) {
+          case 'ESCAPE':
+            handleToggleFullScreen(false)
+            break
+          case 'F':
+            handleToggleFullScreen(!isFullScreenEnabled)
+            break
+          case 'N':
+          case 'M':
+            const offset = (key.toLocaleUpperCase() === 'N' && -1) || (key.toLocaleUpperCase() === 'M' && 1)
+            
+            if (typeof offset === 'boolean') { return }
+            if (renderMode === 'page') {
+              if (offset === 1 && renderCount === computTotalRenderCount()) {
+                handleChangePage(1)
+                return
+              } else if (offset === -1 && renderCount === 0) {
+                handleChangePage(-1, 1)
+                return
+              }
+              handleChangeRenderCount(offset)
+            } else if (renderMode === 'scroll') {
+              const { current } = contentEl
+              const { offsetHeight, scrollHeight, scrollTop } = current
+              const computedScrollHeight = scrollHeight - offsetHeight
+              const distance = parseInt(window.getComputedStyle(current)['lineHeight'])
+              const rate = Math.ceil((scrollTop + (distance * offset * 5)) / distance)
+    
+              if (offset === 1 && (computedScrollHeight - scrollTop) < 1) {
+                handleChangePage(1)
+                return
+              } else if (offset === -1 && scrollTop === 0) {
+                handleChangePage(-1, 1)
+                return
+              }
+              current.scrollTo({ top: distance * rate, behavior: 'smooth' })
+            }
         }
       }
     }
@@ -499,7 +509,7 @@ export default function Reader ({
     return () => {
       window.removeEventListener('keyup', hotkeySupport)
     }
-  }, [isReaderActive, renderMode, pageNumber, renderCount, sMenuStatus])
+  }, [isReaderActive, renderMode, pageNumber, renderCount, sMenuStatus, isFullScreenEnabled])
 
   /** 构建映射表 */
   useEffect(() => {
