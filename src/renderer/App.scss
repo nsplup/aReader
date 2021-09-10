@@ -124,7 +124,7 @@ body, html, #root {
 
 .launch-title {
   font-size: 20px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .launch-content {
@@ -174,7 +174,7 @@ body, html, #root {
     margin: 0 auto;
   
     color: #ffffff;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     text-align: center;
     text-overflow: ellipsis;
@@ -441,7 +441,7 @@ body, html, #root {
       }
       &-active {
         color: $primary-color-light;
-        font-weight: bold;
+        font-weight: 600;
       }
     }
   }
@@ -454,7 +454,7 @@ body, html, #root {
       border-radius: 50%;
 
       font-size: 35px;
-      font-weight: bold;
+      font-weight: 600;
       &-current::after {
         display: block;
         position: absolute;
@@ -499,7 +499,7 @@ body, html, #root {
       border: none;
       border-radius: 5px;
       color: #ffffff;
-      font-weight: bold;
+      font-weight: 600;
       background: $primary-color-light;
       transform: translate3d(calc(100% - 10px), 0, 0);
       transition: transform .2s ease-out;
@@ -533,7 +533,7 @@ body, html, #root {
         overflow: hidden;
         margin: 0;
         color: #505050;
-        font-weight: bold;
+        font-weight: 600;
         white-space: nowrap;
         text-overflow: ellipsis;
       }
@@ -633,7 +633,7 @@ body, html, #root {
     padding-left: 40px;
     padding-right: 10px;
     border-radius: 10px;
-    font-weight: bold;
+    font-weight: 600;
     box-sizing: border-box;
     & p {
       width: 100%;
@@ -690,7 +690,7 @@ body, html, #root {
       padding: 10px 30px;
       border-radius: 10px;
       color: #909090;
-      font-weight: bold;
+      font-weight: 600;
 
       &:hover {
         background-color: rgba(50, 50, 50, .1);
