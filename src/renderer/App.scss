@@ -498,7 +498,6 @@ body, html, #root {
       padding-left: 10px;
       border: none;
       border-radius: 5px;
-      color: #ffffff;
       font-weight: 600;
       background: $primary-color-light;
       transform: translate3d(calc(100% - 10px), 0, 0);
@@ -851,7 +850,7 @@ body, html, #root {
     animation: slide 1.5s cubic-bezier(.77, 0, .18, 1) infinite;
   }
   &-p-a {
-    &-1, &-2, &-3 {
+    &-1, &-2 {
       position: absolute;
       left: 0;
       width: 100%;

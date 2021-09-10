@@ -1043,7 +1043,7 @@ export default function Reader ({
           />
           <div style={{ position: 'relative' }}>
             <button className="flex-box s-m-search-btn" onClick={ handleStartSearch }>
-              <i className="ri-search-line"></i>
+              <i className="ri-search-line" style={{ color: '#ffffff' }}></i>
             </button>
             <input
               type="text"
@@ -1085,7 +1085,7 @@ export default function Reader ({
                       key={ index }
                       className="s-m-search-result-item common-active"
                     >
-                      <p className="s-m-search-result-title">{ typeof navLabel === 'string' ? navLabel : `第 ${pageNumber + 1} 章` }</p>
+                      <p className="s-m-search-result-title">{ typeof navLabel === 'string' ? navLabel : `章节 ${pageNumber + 1}` }</p>
                       <p className="s-m-search-result-text">{ str }</p>
                       <span className="s-m-search-result-prog">{ Math.floor(prog * 100) }</span>
                     </div>
@@ -1207,7 +1207,7 @@ export default function Reader ({
                 const { href } = bookInfo.manifest[id]
                 const navLabel = typeof navMap.current[id] === 'string'
                   ? navMap.current[id]
-                  : `第 ${ spine + 1 } 章`
+                  : `章节 ${ spine + 1 }`
                 return (
                   <p
                     data-href={ href }
