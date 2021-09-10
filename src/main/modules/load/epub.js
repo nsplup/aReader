@@ -7,7 +7,7 @@ const getFileMimeType = require('./getFileMimeType')
 const convertImageToDataURL = require('./convertImageToDataURL')
 
 const dirName = path.resolve('.', 'data')
-const _7zbin = path.resolve('./resources/app/node_modules/7zip/7zip-lite/7z.exe')
+const _7zbin = require('./7zPath')
 
 function loadEPUB (filePath, res, rej) {
   /** 计算 SHA256 */

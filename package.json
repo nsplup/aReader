@@ -16,6 +16,7 @@
       "build/icons/icon.ico",
       "build/dist/prod/**/*"
     ],
+    "extraResources": ["./build/dependencies/7z/${platform}/${arch}"],
     "win": {
       "icon": "build/icons/icon.ico"
     },
@@ -69,7 +70,6 @@
     "webpack-merge": "^5.7.3"
   },
   "dependencies": {
-    "7zip": "^0.0.6",
     "fast-xml-parser": "^3.19.0",
     "font-list": "^1.2.14",
     "iconv-lite": "^0.6.3",

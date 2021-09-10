@@ -87,8 +87,8 @@ https://github.com/quentinrossetti/node-7z
 
 7zip
 GNU LGPL
-Copyright (C) 1999-2015 Igor Pavlov.
-https://github.com/fritx/win-7zip
+Copyright (C) 1999-2021 Igor Pavlov.
+https://www.7-zip.org/
 
 jschardet
 LGPL-2.1+
