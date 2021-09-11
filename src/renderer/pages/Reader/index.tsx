@@ -10,6 +10,7 @@ import { throttle } from '@utils/throttle'
 import { LOAD_BOOK, READ_BOOK, SEARCH_RESULT, START_SEARCH, STOP_SEARCH, TOGGLE_FULLSCREEN } from '@constants'
 
 import Flipping from './Flipping'
+import { decodeHTMLEntities } from '@utils/decodeEntities'
 
 const searchPlaceholder = require('@static/illustration/undraw_Web_search_re_efla.svg').default
 
@@ -747,7 +748,7 @@ export default function Reader ({
                   opacity: '0.8',
                 }}
               >
-                {bookInfo.title}
+                {decodeHTMLEntities(bookInfo.title)}
               </p>
               <p
                 style={{
@@ -1085,8 +1086,8 @@ export default function Reader ({
                       key={ index }
                       className="s-m-search-result-item common-active"
                     >
-                      <p className="s-m-search-result-title">{ typeof navLabel === 'string' ? navLabel : `章节 ${pageNumber + 1}` }</p>
-                      <p className="s-m-search-result-text">{ str }</p>
+                      <p className="s-m-search-result-title">{ decodeHTMLEntities(typeof navLabel === 'string' ? navLabel : `章节 ${pageNumber + 1}`) }</p>
+                      <p className="s-m-search-result-text">{ decodeHTMLEntities(str) }</p>
                       <span className="s-m-search-result-prog">{ Math.floor(prog * 100) }</span>
                     </div>
                   )
@@ -1152,6 +1153,7 @@ export default function Reader ({
                     ({index, style}) => {
                       const { id, navLabel, href, isSub } = bookInfo.nav[index]
                       const pIndex = bookInfo.spine.indexOf(id)
+                      const decodedNavLabel = decodeHTMLEntities(navLabel)
                       return (
                         <div
                           style={ style }
@@ -1165,9 +1167,9 @@ export default function Reader ({
                           data-href={ href }
                           data-index={ pIndex }
                           key={ index }
-                          title={ navLabel }
+                          title={ decodedNavLabel }
                         >
-                          <p>{ navLabel }</p>
+                          <p>{ decodedNavLabel }</p>
                         </div>
                       )
                     }
@@ -1208,6 +1210,7 @@ export default function Reader ({
                 const navLabel = typeof navMap.current[id] === 'string'
                   ? navMap.current[id]
                   : `章节 ${ spine + 1 }`
+                const decodedNavLabel = decodeHTMLEntities(navLabel)
                 return (
                   <p
                     data-href={ href }
@@ -1215,9 +1218,9 @@ export default function Reader ({
                     data-id={ id }
                     className="common-active reader-bookmark"
                     key={ index }
-                    title={ navLabel }
+                    title={ decodedNavLabel }
                   >
-                    { navLabel }
+                    { decodedNavLabel }
                     <span className="reader-bookmark-prog">{ Math.floor(progress * 100) + '%' }</span>
                   </p>
                 )

@@ -1,18 +1,15 @@
 // this prevents any overhead from creating the object each time
 const element = document.createElement('div')
 
-// regular expression matching HTML entities
-const entity = /&(?:#x[a-f0-9]+|#[0-9]+|[a-z0-9]+)?/ig
-
-export function decodeHTMLEntities(str: string) {
-    // find and replace all the html entities
-    str = str.replace(entity, fragment => {
-        element.innerHTML = fragment
-        return element.textContent
-    })
-
-    // reset the value
+export function decodeHTMLEntities (str: string) {
+  if(str && typeof str === 'string') {
+    // strip script/html tags
+    str = str.replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '')
+    str = str.replace(/<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gmi, '')
+    element.innerHTML = str
+    str = element.textContent
     element.textContent = ''
+  }
 
-    return str
+  return str
 }

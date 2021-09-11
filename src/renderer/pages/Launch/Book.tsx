@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import { decodeHTMLEntities } from '@utils/decodeEntities'
+import React from 'react'
 
 /** C 代表 concise */
 interface CInfomation {
@@ -12,9 +13,9 @@ interface CInfomation {
 const placeholder = require('@static/illustration/undraw_void_3ggu.svg').default
 
 export default function Book ({ hash, cover, title, format, progress }: CInfomation): JSX.Element {
-
+  const decodedTitle = decodeHTMLEntities(title)
   return (
-    <div className="book-wrapper common-active" title={title} data-hash={ hash }>
+    <div className="book-wrapper common-active" title={decodedTitle} data-hash={ hash }>
       <div className="flex-box book-cover">
         {
           cover
@@ -33,7 +34,7 @@ export default function Book ({ hash, cover, title, format, progress }: CInfomat
         }
       </div>
       <div className="book-mask"></div>
-      <p className="book-title">{ title }</p>
+      <p className="book-title">{ decodedTitle }</p>
       <p className="book-description">{ format }</p>
       <p className="book-progress">{ progress }</p>
     </div>
