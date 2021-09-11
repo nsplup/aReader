@@ -914,7 +914,6 @@ body, html, #root {
     border-radius: 10px;
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
-    color: #b7a1ff;
     background: #2e003e;
     transition: height .3s ease-out;
     box-sizing: border-box;
@@ -926,6 +925,7 @@ body, html, #root {
       padding-right: 5px;
     }
     & p {
+      color: #b7a1ff;
       margin-bottom: 0;
       white-space: pre-wrap;
     }
