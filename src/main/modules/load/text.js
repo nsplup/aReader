@@ -57,7 +57,7 @@ function loadTEXT (filePath, res, rej) {
               /** 转码为UTF8 */
               const source = iconv.decode(file, encoding)
                 .split(/[\r\n]/)
-              const regExp = /^(卷\s*[0123456789一二三四五六七八九十零〇百千两壹貳叁肆伍陸柒捌玖拾佰仟]+.*|第\s*[0123456789一二三四五六七八九十零〇百千两壹貳叁肆伍陸柒捌玖拾佰仟]+\s*[章回卷节集部]+.*|[0123456789]+\s*.+)$/
+              const regExp = /^(卷\s*[0123456789一二三四五六七八九十零〇百千两壹貳叁肆伍陸柒捌玖拾佰仟]+.*|第\s*[0123456789一二三四五六七八九十零〇百千两壹貳叁肆伍陸柒捌玖拾佰仟]+\s*[章回卷节集部]+.*|[0123456789]+\s+.+)$/
               const chunks = []
               let chunk = []
               const navLabelMark = '#**镜览**#' /** 目录标记 */
