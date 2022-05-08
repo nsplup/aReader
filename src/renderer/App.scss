@@ -247,16 +247,25 @@ body, html, #root {
     width: 100%;
     height: 100%;
     font-family: inherit;
-  }
 
-  & p {
-    margin: 0;
-    font-family: inherit;
-    word-break: break-word;
+    & > * {
+      margin: 0;
+      line-height: 2;
+      font-family: inherit;
+      word-break: break-word;
+      -webkit-column-break-inside: avoid;
+
+      &::before {
+        display: inline-block;
+        height: 1em;
+        opacity: 0;
+        content: '';
+      }
+    }
   }
 
   & rt, & rtc {
-    font-size: 70%;
+    font-size: 60%;
   }
 
   &-scroll {
@@ -265,6 +274,9 @@ body, html, #root {
     & > div {
       display: inline;
       padding-bottom: 20px;
+    }
+    & rt, & rtc {
+      transform: translate3d(0, -15%, 0);
     }
   }
 
@@ -957,7 +969,7 @@ body, html, #root {
   }
   &-is-active {
     transform: scaleY(1);
-    z-index: 9999;
+    z-index: 1002;
   }
   &-view-more {
     & .c-toast-detail {

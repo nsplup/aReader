@@ -105,7 +105,7 @@ export default function Reader ({
   const [fontFamily, setFontFamily] = useState('微软雅黑')
   const [fontSize, setFontSize] = useState(18)
   const [textIndent, setTextIndent] = useState(0)
-  const [lineHeight, setLineHeight] = useState(50)
+  const [lineHeight, setLineHeight] = useState(15)
 
   const [cColorPlan, setCColorPlan] = useState(0)
   const [textColor, setTextColor] = useState('#b7a1ff')
@@ -500,8 +500,8 @@ export default function Reader ({
               const { current } = contentEl
               const { offsetHeight, scrollHeight, scrollTop } = current
               const computedScrollHeight = scrollHeight - offsetHeight
-              const distance = parseInt(window.getComputedStyle(current)['lineHeight'])
-              const rate = Math.ceil((scrollTop + (distance * offset * 5)) / distance)
+              const distance = parseInt(window.getComputedStyle(current)['fontSize'])
+              const rate = Math.ceil((scrollTop + (distance * offset * 15)) / distance)
     
               if (offset === 1 && (computedScrollHeight - scrollTop) < 1) {
                 handleChangePage(1)
@@ -562,8 +562,6 @@ export default function Reader ({
     cursor: '',
   })
   const handleChangeStyle = debounce(() => {
-    const multiple = fontSize / 18
-    const computedTextIndent = textIndent / 10 / multiple
     let color: string, bgColor: string
 
     if (cColorPlan === -1) {
@@ -579,22 +577,22 @@ export default function Reader ({
       color,
       fontFamily,
       fontSize: Math.floor(fontSize) + 'px',
-      textIndent: computedTextIndent + 'em',
-      lineHeight: 150 + lineHeight + '%',
       backgroundColor: bgColor
     }))
     setStyleCSS(CSS => Object.assign({}, CSS, { color, backgroundColor: bgColor }))
   }, 150)
   useEffect(handleChangeStyle, [
-    fontFamily, fontSize, textIndent, lineHeight, textColor, backgroundColor, cColorPlan
+    fontFamily, fontSize, textColor, backgroundColor, cColorPlan
   ])
 
   useEffect(() => {
     setStyleCSS(CSS => Object.assign({}, CSS, { cursor: isToolsActive || sMenuStatus !== null ? 'auto' : 'none' }))
   }, [isToolsActive, sMenuStatus])
-  const generateCSSText = (CSS: { color: string; backgroundColor: string; cursor: string }) => {
-    const { color, backgroundColor, cursor } = CSS
-    return `
+
+  const [CSSText, setCSSText] = useState('')
+  useEffect(() => {
+    const { color, backgroundColor, cursor } = styleCSS
+    let computedCSSText = `
     .reader-wrapper * { cursor: ${cursor} };
     .reader-content::-webkit-scrollbar {
       width: 6px;
@@ -615,8 +613,16 @@ export default function Reader ({
       color: ${backgroundColor} !important;
       background-color: ${color} !important;
     }
+
+    .reader-content > div > * {
+      margin-bottom: ${lineHeight}px;
+    }
+    .reader-content > div > *::before {
+      width: ${textIndent}em;
+    }
     `
-  }
+    setCSSText(computedCSSText)
+  }, [styleCSS, textIndent, lineHeight])
 
   /** 保存 .userconfig 设置 */
   useEffect(() => {
@@ -681,7 +687,7 @@ export default function Reader ({
         )
       }
     >
-      <style dangerouslySetInnerHTML={{ __html: generateCSSText(styleCSS) }}></style>
+      <style dangerouslySetInnerHTML={{ __html: CSSText }}></style>
       <div
         className={
           classNames(
@@ -918,7 +924,7 @@ export default function Reader ({
               <CustomSlider
                 min={12}
                 max={50}
-                step={0.38}
+                step={1}
                 value={ fontSize }
                 onChange={ (val: number) => setFontSize(val) }
               />
@@ -926,7 +932,8 @@ export default function Reader ({
             <div className="flex-box s-m-row">
               <p className="s-m-title">首行缩进</p>
               <CustomSlider
-                max={100}
+                max={10}
+                step={1}
                 value={ textIndent }
                 onChange={ (val: number) => setTextIndent(val) }
               />
@@ -934,7 +941,8 @@ export default function Reader ({
             <div className="flex-box s-m-row">
               <p className="s-m-title">行距</p>
               <CustomSlider
-                max={100}
+                max={50}
+                step={1}
                 value={ lineHeight }
                 onChange={ (val: number) => setLineHeight(val) }
               />

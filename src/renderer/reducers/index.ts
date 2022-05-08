@@ -34,7 +34,7 @@ const initialState: State = {
       fontFamily: '微软雅黑',
       fontSize: 18,
       textIndent: 0,
-      lineHeight: 50
+      lineHeight: 15
     },
     colorPlan: {
       current: 0,
