@@ -145,12 +145,23 @@ function Launch ({
     ipcRenderer.on(LOAD_USERCONFIG, userconfigListener)
     ipcRenderer.on(START_IMPORT, startImportListener)
 
+    /** 屏蔽空格滚动 */
+    const banSpaceKey = (e: KeyboardEvent) => {
+      const { code } = e
+      if (code.toUpperCase() === 'SPACE') {
+        e.preventDefault()
+      }
+    }
+
+    window.addEventListener('keypress', banSpaceKey)
+
     return () => {
       document.body.removeEventListener('contextmenu', handleContextmenu)
       document.body.removeEventListener('click', handleEnableReader)
       ipcRenderer.off(LOAD_LIBRARY, libraryListener)
       ipcRenderer.off(LOAD_USERCONFIG, userconfigListener)
       ipcRenderer.off(START_IMPORT, startImportListener)
+      window.removeEventListener('keypress', banSpaceKey)
     }
   }, [])
   useEffect(() => {
@@ -259,8 +270,7 @@ function Launch ({
             flexDirection: 'column',
           }}
         >
-          <img src={ illustration } width="400" draggable="false"/>
-          <p className="common-description">大方无隅，大器晚成，大音希声，大象无形。</p>
+          <img src={ illustration } width="400" draggable="false" style={{ marginBottom: '30px' }} />
         </div>
         {/* 底部 Logo */}
         <div

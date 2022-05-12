@@ -12,6 +12,13 @@ body, html, #root {
   height: 100%;
 }
 
+/*去除INPUT箭头*/
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+}
+
 * {
   font-family: Arial, "微软雅黑";
   color: $common-text-main;
@@ -294,7 +301,7 @@ body, html, #root {
   right: 0;
   z-index: 999;
   
-  width: 520px;
+  width: 575px;
   height: 45px;
   
   margin: 0 auto;
@@ -389,14 +396,15 @@ body, html, #root {
   }
 }
 
-.reader-pnum {
-  width: 70px;
+.reader-input {
+  width: 40px;
+  margin: 0 10px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
   text-align: center;
-  background-color: unset !important;
-
-  &:hover .reader-tool-tips {
-    transform: translate3d(-50%, -22px, 0) !important;
-  }
+  background-color: rgba(50,50,50,.1);
+  outline: none;
 }
 
 .secondary-menu {

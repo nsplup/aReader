@@ -9,7 +9,6 @@ import { formatTime } from '@utils/formatTime'
 import { throttle } from '@utils/throttle'
 import { LOAD_BOOK, READ_BOOK, SEARCH_RESULT, START_SEARCH, STOP_SEARCH, TOGGLE_FULLSCREEN } from '@constants'
 
-import Flipping from './Flipping'
 import { decodeHTMLEntities } from '@utils/decodeEntities'
 
 const searchPlaceholder = require('@static/illustration/undraw_Web_search_re_efla.svg').default
@@ -34,7 +33,8 @@ const ColorPlanRender = (text: string, background: string, index: number, curren
   <div
     style={{
       color: text,
-      backgroundColor: background
+      backgroundColor: background,
+      transition: 'transform .2s ease-out, color .4s ease-in-out, background-color .4s ease-in-out'
     }}
     className={
       classNames(
@@ -59,6 +59,7 @@ const colorPlan = [
   ['#adadb5', '#29354b'],
   ['#5d788c', '#080b10'],
 ]
+const customPlan = ['#b7a1ff', '#2e003e']
 
 const defaultInfo: Infomation = {
   title: '',
@@ -108,8 +109,8 @@ export default function Reader ({
   const [lineHeight, setLineHeight] = useState(15)
 
   const [cColorPlan, setCColorPlan] = useState(0)
-  const [textColor, setTextColor] = useState('#b7a1ff')
-  const [backgroundColor, setBackgroundColor] = useState('#2e003e')
+  const [textColor, setTextColor] = useState(customPlan[0])
+  const [backgroundColor, setBackgroundColor] = useState(customPlan[1])
   /** 状态属性 */
   const [sMenuStatus, setSMenuStatus] = useState(null) /** 可选值：null/nav/font/color/search */
   const [bookInfo, setBookInfo] = useState<Infomation>(Object.assign({}, defaultInfo))
@@ -132,6 +133,7 @@ export default function Reader ({
     setBookInfo(Object.assign({}, defaultInfo))
     setTextCache(null)
     setPageNumber(0)
+    setJumpValue(1)
     setContent('')
     setSearchResult([])
     setKeyword('')
@@ -307,7 +309,7 @@ export default function Reader ({
 
   const handleJump = (href: string, progress = 0) => {
     const { format, hash } = bookInfo
-    /** 当格式未TEXT并存在缓存时从缓存获取书籍内容 */
+    /** 当格式为TEXT并存在缓存时从缓存获取书籍内容 */
     if (format === 'TEXT' && textCache) {
       setContent(textCache[href])
       parseProg(progress)
@@ -332,8 +334,31 @@ export default function Reader ({
     if (offset !== pageNumber) {
       handleJump(manifest[spine[offset]].href, progress)
       setPageNumber(offset)
+      setJumpValue(offset + 1)
     }
   }
+
+  const [jumpValue, setJumpValue] = useState(pageNumber + 1)
+  const jumpValueBox = useRef(null)
+  const handleInputToJump = () => {
+    if (!isNaN(jumpValue)) {
+      const { spine, manifest } = bookInfo
+      let newPageNumber = Math.min(
+        spine.length - 1,
+        Math.max(0, jumpValue - 1)
+      )
+  
+      /** 处理边界情况 */
+      if (newPageNumber !== pageNumber) {
+        handleJump(manifest[spine[newPageNumber]].href, 0)
+        setPageNumber(newPageNumber)
+      }
+    }
+  }
+  useEffect(() => {
+    setJumpValue(pageNumber + 1)
+    jumpValueBox.current.blur()
+  }, [pageNumber, isToolsActive])
 
   const parseProg = (prog: number) => {
     if (renderMode === 'page') {
@@ -362,6 +387,7 @@ export default function Reader ({
         handleJump(href)
         handleCloseSMenu()
         setPageNumber(index)
+        setJumpValue(index + 1)
       }
     }
   }
@@ -386,6 +412,7 @@ export default function Reader ({
       if (id !== cId) {
         handleJump(href, prog)
         setPageNumber(index)
+        setJumpValue(index + 1)
       } else {
         parseProg(prog)
       }
@@ -409,6 +436,7 @@ export default function Reader ({
       if (index !== pageNumber) {
         handleJump(href, prog)
         setPageNumber(index)
+        setJumpValue(index + 1)
       } else {
         parseProg(prog)
       }
@@ -585,6 +613,11 @@ export default function Reader ({
     fontFamily, fontSize, textColor, backgroundColor, cColorPlan
   ])
 
+  const handleResetCustomPlan = () => {
+    setTextColor(customPlan[0])
+    setBackgroundColor(customPlan[1])
+  }
+
   useEffect(() => {
     setStyleCSS(CSS => Object.assign({}, CSS, { cursor: isToolsActive || sMenuStatus !== null ? 'auto' : 'none' }))
   }, [isToolsActive, sMenuStatus])
@@ -752,6 +785,7 @@ export default function Reader ({
                   fontSize: '18px',
                   fontWeight: 'bold',
                   opacity: '0.8',
+                  textAlign: 'center',
                 }}
               >
                 {decodeHTMLEntities(bookInfo.title)}
@@ -760,20 +794,34 @@ export default function Reader ({
                 style={{
                   position: 'absolute',
                   bottom: '10px',
-                  width: 'calc(100% - 200px)',
+                  width: '100px',
                   opacity: '0.6',
                 }}
               >
-                {navMap.current[bookInfo.spine[pageNumber]]}
+                {`${'0'.repeat(bookInfo.spine.length.toString().length - (pageNumber + 1).toString().length)}${pageNumber + 1} / ${bookInfo.spine.length}`}
+              </p>
+              <p
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: '10px',
+                  width: 'calc(100% - 300px)',
+                  margin: '0 auto',
+                  textAlign: 'center',
+                  opacity: '0.6',
+                }}
+              >
+                {decodeHTMLEntities(navMap.current[bookInfo.spine[pageNumber]])}
               </p>
               <p
                 style={{
                   position: 'absolute',
                   bottom: '10px',
                   right: '10px',
+                  width: '120px',
                   opacity: '0.6',
                 }}
-                title={new Date(time).toLocaleString()}
               >
                 {formatTime(time, 'YYYY/MM/DD hh:mm')}
               </p>
@@ -854,16 +902,24 @@ export default function Reader ({
         >
           <span className="reader-tool-tips">上一章</span>
         </i>
-        <span className="reader-tool flex-box reader-pnum">
-          <Flipping value={ pageNumber + 1 }/>
-          <span className="reader-tool-tips">
-            {
-              Math.floor((pageNumber + 1) / bookInfo.spine.length * 100) === 0
-              ? '1%'
-              : Math.floor((pageNumber + 1) / bookInfo.spine.length * 100) + '%'
-            }
-          </span>
-        </span>
+        <input
+          type="number"
+          className='reader-input'
+          onInput={(e) => { setJumpValue(parseInt((e.target as HTMLInputElement).value)); handleMouseEnterTools() }}
+          value={jumpValue}
+          ref={jumpValueBox}
+        />
+        <i
+          className={
+            classNames(
+              'reader-tool common-active ri-guide-fill',
+              { 'reader-tool-disabled': isNaN(jumpValue) || (jumpValue - 1) === pageNumber },
+            )
+          }
+          onClick={handleInputToJump}
+        >
+          <span className="reader-tool-tips">跳转</span>
+        </i>
         <i
           className={
             classNames(
@@ -1024,7 +1080,11 @@ export default function Reader ({
                 }}
               >
                 { ColorPlanRender(textColor, backgroundColor, -1, cColorPlan) }
-                <p className="s-m-title">自定义方案</p>
+                <p
+                  className="s-m-title reader-tool common-active"
+                  style={{ margin: 0, padding: '10px' }}
+                  onClick={ handleResetCustomPlan }
+                >自定义方案</p>
               </div>
             </div>
           </div>
