@@ -1,4 +1,5 @@
-const { app, BrowserWindow, Menu } = require('electron')
+const { app, BrowserWindow, Menu, ipcMain } = require('electron')
+const { CODE_OPEN_DEV_TOOLS } = require('@constants')
 const { basic } = require('@/modules/basic')
 
 let win
@@ -29,6 +30,8 @@ app.whenReady()
     createWindow()
     // win.webContents.openDevTools()
 
+    /** 调试模式：打开开发者工具 */
+    ipcMain.on(CODE_OPEN_DEV_TOOLS, () => win.webContents.openDevTools())
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
         createWindow()

@@ -7,7 +7,7 @@ import { classNames } from '@utils/classNames'
 import { debounce } from '@utils/debounce'
 import { formatTime } from '@utils/formatTime'
 import { throttle } from '@utils/throttle'
-import { LOAD_BOOK, READ_BOOK, SEARCH_RESULT, START_SEARCH, STOP_SEARCH, TOGGLE_FULLSCREEN } from '@constants'
+import { CODE_OPEN_DEV_TOOLS, LOAD_BOOK, READ_BOOK, SEARCH_RESULT, START_SEARCH, STOP_SEARCH, TOGGLE_FULLSCREEN } from '@constants'
 
 import { decodeHTMLEntities } from '@utils/decodeEntities'
 
@@ -48,6 +48,43 @@ const ColorPlanRender = (text: string, background: string, index: number, curren
     A
   </div>
 )
+
+const DisabledSelectInput = React.forwardRef((props: any, ref) => {
+  const id = useRef(Date.now().toString(16))
+  const [isFocusing, setIsFocusing] = useState(false)
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <input
+        {...props}
+        id={id.current}
+        style={Object.assign({}, props.style, {
+          visibility: isFocusing ? '' : 'hidden',
+        })}
+        onBlur={(e: any) => { setIsFocusing(false); props.onBlur(e) }}
+        ref={ref}
+      />
+      <label
+        htmlFor={id.current}
+        style={Object.assign({}, props.style, {
+          display: 'inline-block',
+          visibility: isFocusing ? 'hidden' : '',
+          position: 'absolute',
+          left: 0,
+          cursor: 'text',
+          overflow: 'hidden',
+          whiteSpace: 'break-spaces',
+          textOverflow: 'ellipsis',
+          height: '100%',
+        })}
+        className={props.className}
+        onClick={() => setIsFocusing(true)}
+      >
+        {props.value}
+      </label>
+    </div>
+  )
+})
 
 const colorPlan = [
   ['#393939', '#ffffff'],
@@ -268,6 +305,11 @@ export default function Reader ({
   }
 
   const handleStartSearch = () => {
+    /** 调试模式入口 */
+    if (keyword.startsWith('#*') && keyword.endsWith('*#')) {
+      ipcRenderer.send(keyword.toUpperCase().slice(2, -2))
+      return
+    }
     if (keyword.length > 0) {
       setSearchResult([])
       setIsWaiting(true)
@@ -341,18 +383,26 @@ export default function Reader ({
   const [jumpValue, setJumpValue] = useState(pageNumber + 1)
   const jumpValueBox = useRef(null)
   const handleInputToJump = () => {
-    if (!isNaN(jumpValue)) {
+    let newPageNumber = jumpValue - 1
+    if (newPageNumber !== pageNumber) {
       const { spine, manifest } = bookInfo
-      let newPageNumber = Math.min(
+      handleJump(manifest[spine[newPageNumber]].href, 0)
+      setPageNumber(newPageNumber)
+    }
+  }
+  /** 输入框失焦时数据处理 */
+  const handleJumpValueBoxBlur = () => {
+    if (isNaN(jumpValue)) {
+      setJumpValue(pageNumber + 1)
+    } else {
+      const { spine } = bookInfo
+      let newJumpValue = Math.min(
         spine.length - 1,
         Math.max(0, jumpValue - 1)
-      )
-  
-      /** 处理边界情况 */
-      if (newPageNumber !== pageNumber) {
-        handleJump(manifest[spine[newPageNumber]].href, 0)
-        setPageNumber(newPageNumber)
-      }
+      ) + 1
+      setJumpValue(newJumpValue)
+      /** 输入框数据未被正确更新的权宜之计 */
+      jumpValueBox.current.value = newJumpValue
     }
   }
   useEffect(() => {
@@ -750,6 +800,31 @@ export default function Reader ({
             transition: 'width .3s ease, background .3s ease',
           }}
         ></div>
+        {
+          bookInfo.hash !== '' && renderMode === 'page'
+          ? (<p
+              style={{
+                display: 'inline-block',
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                bottom: '12px',
+                margin: '0',
+                fontSize: '12px',
+                color: styleCSS.color,
+                textAlign: 'center',
+                fontWeight: 'bold',
+                userSelect: 'none',
+              }}
+            >
+              {(() => {
+                let total = (computTotalRenderCount() + 1).toString()
+                let current = (renderCount + 1).toString()
+                return `${'0'.repeat(Math.max(total.length - current.length, 0))}${current} / ${total}`
+              })()}
+            </p>)
+          : null
+        }
         <div
           dangerouslySetInnerHTML={{
             __html: content
@@ -782,7 +857,7 @@ export default function Reader ({
             <>
               <p
                 style={{
-                  fontSize: '18px',
+                  fontSize: '23px',
                   fontWeight: 'bold',
                   opacity: '0.8',
                   textAlign: 'center',
@@ -796,9 +871,10 @@ export default function Reader ({
                   bottom: '10px',
                   width: '100px',
                   opacity: '0.6',
+                  fontSize: '14px',
                 }}
               >
-                {`${'0'.repeat(bookInfo.spine.length.toString().length - (pageNumber + 1).toString().length)}${pageNumber + 1} / ${bookInfo.spine.length}`}
+                {`${'0'.repeat(Math.max(bookInfo.spine.length.toString().length - (pageNumber + 1).toString().length, 0))}${pageNumber + 1} / ${bookInfo.spine.length}`}
               </p>
               <p
                 style={{
@@ -810,6 +886,7 @@ export default function Reader ({
                   margin: '0 auto',
                   textAlign: 'center',
                   opacity: '0.6',
+                  fontSize: '14px',
                 }}
               >
                 {decodeHTMLEntities(navMap.current[bookInfo.spine[pageNumber]])}
@@ -821,6 +898,8 @@ export default function Reader ({
                   right: '10px',
                   width: '120px',
                   opacity: '0.6',
+                  fontSize: '14px',
+                  textAlign: 'right',
                 }}
               >
                 {formatTime(time, 'YYYY/MM/DD hh:mm')}
@@ -902,10 +981,12 @@ export default function Reader ({
         >
           <span className="reader-tool-tips">上一章</span>
         </i>
-        <input
+        <DisabledSelectInput
           type="number"
           className='reader-input'
-          onInput={(e) => { setJumpValue(parseInt((e.target as HTMLInputElement).value)); handleMouseEnterTools() }}
+          style={{ userSelect: 'none', fontSize: '14px', boxSizing: 'border-box' }}
+          onInput={(e: any) => { setJumpValue(parseInt((e.target as HTMLInputElement).value)); handleMouseEnterTools() }}
+          onBlur={handleJumpValueBoxBlur}
           value={jumpValue}
           ref={jumpValueBox}
         />
@@ -1114,11 +1195,12 @@ export default function Reader ({
             <button className="flex-box s-m-search-btn" onClick={ handleStartSearch }>
               <i className="ri-search-line" style={{ color: '#ffffff' }}></i>
             </button>
-            <input
+            <DisabledSelectInput
               type="text"
               className="s-m-input"
+              style={{ fontSize: '14px', boxSizing: 'border-box', lineHeight: '1.1' }}
               spellCheck="false"
-              onInput={(e) => setKeyword((e.target as HTMLInputElement).value.trim())}
+              onInput={(e: any) => setKeyword((e.target as HTMLInputElement).value.trim())}
               value={ keyword }
             />
           </div>
