@@ -61,7 +61,7 @@ const DisabledSelectInput = React.forwardRef((props: any, ref) => {
         style={Object.assign({}, props.style, {
           visibility: isFocusing ? '' : 'hidden',
         })}
-        onBlur={(e: any) => { setIsFocusing(false); props.onBlur(e) }}
+        onBlur={(e: any) => { setIsFocusing(false); props.onBlur && props.onBlur(e) }}
         ref={ref}
       />
       <label
@@ -157,6 +157,7 @@ export default function Reader ({
   const [keyword, setKeyword] = useState('')
   const [searchResult, setSearchResult] = useState([])
   const [isFullScreenEnabled, setIsFullScreenEnabled] = useState(false)
+  const [isFocusingMode, setIsFocusingMode] = useState(false)
   /** 书籍内容 */
   const [content, setContent] = useState('')
   const [textCache, setTextCache] = useState(null)
@@ -419,6 +420,8 @@ export default function Reader ({
       contentEl.current.scrollTo({ left: 0, top: computedHeight * prog })
     }
     setProgress(prog)
+    /** 强制更新 */
+    setTime(Date.now())
   }
 
   const handleClickNav = (e: React.MouseEvent) => {
@@ -552,8 +555,8 @@ export default function Reader ({
   useEffect(() => {
     function hotkeySupport (e: KeyboardEvent) {
       if (isReaderActive && sMenuStatus === null) {
-        const { key } = e
-        switch (key.toLocaleUpperCase()) {
+        let key = e.key.toLocaleUpperCase()
+        switch (key) {
           case 'ESCAPE':
             handleToggleFullScreen(false)
             break
@@ -562,7 +565,7 @@ export default function Reader ({
             break
           case 'N':
           case 'M':
-            const offset = (key.toLocaleUpperCase() === 'N' && -1) || (key.toLocaleUpperCase() === 'M' && 1)
+            const offset = (key === 'N' && -1) || (key === 'M' && 1)
             
             if (typeof offset === 'boolean') { return }
             if (renderMode === 'page') {
@@ -590,6 +593,15 @@ export default function Reader ({
               }
               current.scrollTo({ top: distance * rate, behavior: 'smooth' })
             }
+            break
+          case 'L':
+            setIsFocusingMode(!isFocusingMode)
+            break
+          case 'O':
+          case 'P':
+            const pageOffset = (key === 'O' && -1) || (key === 'P' && 1)
+            handleChangePage(pageOffset)
+            break
         }
       }
     }
@@ -598,7 +610,7 @@ export default function Reader ({
     return () => {
       window.removeEventListener('keyup', hotkeySupport)
     }
-  }, [isReaderActive, renderMode, pageNumber, renderCount, sMenuStatus, isFullScreenEnabled])
+  }, [isReaderActive, renderMode, pageNumber, renderCount, sMenuStatus, isFullScreenEnabled, isFocusingMode])
 
   /** 构建映射表 */
   useEffect(() => {
@@ -801,30 +813,49 @@ export default function Reader ({
           }}
         ></div>
         {
-          bookInfo.hash !== '' && renderMode === 'page'
-          ? (<p
-              style={{
-                display: 'inline-block',
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                bottom: '12px',
-                margin: '0',
-                fontSize: '12px',
-                color: styleCSS.color,
-                textAlign: 'center',
-                fontWeight: 'bold',
-                userSelect: 'none',
-              }}
-            >
-              {(() => {
-                let total = (computTotalRenderCount() + 1).toString()
-                let current = (renderCount + 1).toString()
-                return `${'0'.repeat(Math.max(total.length - current.length, 0))}${current} / ${total}`
-              })()}
-            </p>)
-          : null
+          (() => {
+            if (bookInfo.hash !== '' && renderMode === 'page') {
+              let total = (computTotalRenderCount() + 1).toString()
+              let current = (renderCount + 1).toString()
+              return (<p
+                style={{
+                  display: 'inline-block',
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: '12px',
+                  margin: '0',
+                  fontSize: '12px',
+                  color: styleCSS.color,
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  userSelect: 'none',
+                }}
+              >
+                {`${'0'.repeat(Math.max(total.length - current.length, 0))}${current} / ${total}`}
+              </p>)
+            }
+            return null
+          })()
         }
+        <span
+          style={{
+            display: 'flex',
+            position: 'absolute',
+            left: '7px',
+            bottom: '7px',
+            padding: '5px',
+            borderRadius: '50%',
+            color: styleCSS.color,
+            backgroundColor: styleCSS.backgroundColor,
+            transition: 'background-color .3s ease-out, color .3s ease-out',
+            visibility: isFocusingMode ? 'visible' : 'hidden',
+            userSelect: 'none',
+            fontSize: '15px',
+          }}
+        >
+          <span className='ri-moon-fill' style={{ margin: 0 }}></span>
+        </span>
         <div
           dangerouslySetInnerHTML={{
             __html: content
@@ -845,9 +876,12 @@ export default function Reader ({
         className={
           classNames(
             'flex-box reader-detail',
-              { 'reader-tools-focus': isToolsActive || (sMenuStatus !== null && sMenuStatus !== 'nav') }
-            )
-          }
+            {
+              'reader-tools-focus': !isFocusingMode
+                && (isToolsActive || (sMenuStatus !== null && sMenuStatus !== 'nav'))
+            }
+          )
+        }
         onMouseEnter={ handleMouseEnterTools }
         onMouseLeave={ handleMouseLeaveTools }
       >
@@ -913,9 +947,12 @@ export default function Reader ({
         className={
           classNames(
             'flex-box reader-tools',
-              { 'reader-tools-focus': isToolsActive || (sMenuStatus !== null && sMenuStatus !== 'nav') }
-            )
-          }
+            {
+              'reader-tools-focus': !isFocusingMode
+                && (isToolsActive || (sMenuStatus !== null && sMenuStatus !== 'nav'))
+            }
+          )
+        }
         onMouseEnter={ handleMouseEnterTools }
         onMouseLeave={ handleMouseLeaveTools }
       >
@@ -994,7 +1031,12 @@ export default function Reader ({
           className={
             classNames(
               'reader-tool common-active ri-guide-fill',
-              { 'reader-tool-disabled': isNaN(jumpValue) || (jumpValue - 1) === pageNumber },
+              {
+                'reader-tool-disabled': isNaN(jumpValue)
+                || (jumpValue - 1) === pageNumber
+                || jumpValue < 1
+                || ((pageNumber + 1) === bookInfo.spine.length && jumpValue > pageNumber)
+              },
             )
           }
           onClick={handleInputToJump}
