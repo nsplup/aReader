@@ -7,7 +7,7 @@ import { classNames } from '@utils/classNames'
 import { debounce } from '@utils/debounce'
 import { formatTime } from '@utils/formatTime'
 import { throttle } from '@utils/throttle'
-import { CODE_OPEN_DEV_TOOLS, LOAD_BOOK, READ_BOOK, SEARCH_RESULT, START_SEARCH, STOP_SEARCH, TOGGLE_FULLSCREEN } from '@constants'
+import { LOAD_BOOK, READ_BOOK, SEARCH_RESULT, START_SEARCH, STOP_SEARCH, TOGGLE_FULLSCREEN } from '@constants'
 
 import { decodeHTMLEntities } from '@utils/decodeEntities'
 
@@ -168,17 +168,19 @@ export default function Reader ({
 
   const handleCloseReader = () => {
     handleClose(false)
-    setBookInfo(Object.assign({}, defaultInfo))
-    setTextCache(null)
-    setPageNumber(0)
-    setJumpValue(1)
-    setContent('')
     setSearchResult([])
     setKeyword('')
     setIsWaiting(false)
     ipcRenderer.send(STOP_SEARCH)
     handleToggleFullScreen(false)
     document.body.style.overflow = 'auto'
+    setTimeout(() => {
+      setBookInfo(Object.assign({}, defaultInfo))
+      setTextCache(null)
+      setPageNumber(0)
+      setJumpValue(1)
+      setContent('')
+    }, 150)
   }
 
   const handleToggleFullScreen = (status: boolean) => {
@@ -202,6 +204,14 @@ export default function Reader ({
     setBookInfo(bookInfo => Object.assign({}, bookInfo, { bookmark }))
     setBookmarkCaller(Date.now())
   }
+  const handleEmptyBookmark = () => {
+    let { bookmark } = bookInfo
+    bookmark = Object.assign({}, bookmark, {
+      detail: []
+    })
+    setBookInfo(bookInfo => Object.assign({}, bookInfo, { bookmark }))
+    setBookmarkCaller(Date.now())
+  }
 
   const contentEl = useRef<HTMLDivElement>(null)
   const renderEl = useRef<HTMLDivElement>(null)
@@ -210,16 +220,24 @@ export default function Reader ({
   }
   const [renderCount, setRenderCount] = useState(0)
   const [progress, setProgress] = useState(0)
-  const computTotalRenderCount = () => {
+  const computeTotalRenderCount = () => {
     const { current } = renderEl
-    const { offsetWidth } = contentEl.current
-    const { scrollWidth } = current
+    const { offsetWidth } = current
 
-    return Math.ceil((scrollWidth - offsetWidth) / (offsetWidth + 60))
+    const nodeList = Array.from(current.childNodes)
+    const { length } = nodeList
+    if (length > 0) {
+      const lastNode = nodeList[length - 1]
+      const { offsetLeft } = lastNode as HTMLElement
+      
+      return Math.floor(offsetLeft / (offsetWidth + 100))
+    } else {
+      return 0
+    }
   }
   const handleChangeRenderCount = (offset: number) => {
     if (renderMode === 'page') {
-      const totalCount = computTotalRenderCount()
+      const totalCount = computeTotalRenderCount()
       const computedCount = Math.max(
         0,
         Math.min(
@@ -260,12 +278,14 @@ export default function Reader ({
   }
   const handleResize = () => {
     if (renderMode === 'page') {
-      const totalCount = computTotalRenderCount()
+      const totalCount = computeTotalRenderCount()
       const computedCount = Math.floor(progress * totalCount)
       setRenderCount(computedCount)
 
       let prog = computedCount / totalCount
       setProgress(isNaN(prog) ? 0 : prog)
+      /** 强制更新 */
+      setTime(Date.now())
     }
   }
 
@@ -343,12 +363,6 @@ export default function Reader ({
   }
 
   const navList = useRef(null)
-  const handleOpenNavList = () => {
-    const { current } = navList
-    setSMenuStatus('nav')
-    setIsToolsActive(false)
-    current.scrollToItem(pageNumber)
-  }
 
   const handleJump = (href: string, progress = 0) => {
     const { format, hash } = bookInfo
@@ -413,7 +427,7 @@ export default function Reader ({
 
   const parseProg = (prog: number) => {
     if (renderMode === 'page') {
-      setRenderCount(Math.ceil(prog * computTotalRenderCount()))
+      setRenderCount(Math.ceil(prog * computeTotalRenderCount()))
     } else {
       const { scrollHeight, offsetHeight } = contentEl.current
       const computedHeight = scrollHeight - offsetHeight
@@ -424,6 +438,7 @@ export default function Reader ({
     setTime(Date.now())
   }
 
+  const [isNavShouldSquash, setIsNavShouldSquash] = useState(false)
   const handleClickNav = (e: React.MouseEvent) => {
     let { target }: any = e
     let href = target.getAttribute('data-href')
@@ -438,9 +453,13 @@ export default function Reader ({
       const index = parseInt(target.getAttribute('data-index'))
       if (index !== pageNumber) {
         handleJump(href)
-        handleCloseSMenu()
+        !isNavShouldSquash && handleCloseSMenu()
         setPageNumber(index)
         setJumpValue(index + 1)
+      }
+      if (isNavShouldSquash) {
+        setIsNavShouldSquash(false)
+        setTimeout(() => navList.current.scrollToItem(index, 'center'))
       }
     }
   }
@@ -471,6 +490,30 @@ export default function Reader ({
       }
       handleCloseSMenu()
     }
+  }
+  const bookmarkList = useRef(null)
+  const handleScrollToLimit = (offset: number) => {
+    if (navMenuStatus) {
+      const { current } = navList
+      current.scrollToItem(offset)
+    } else {
+      const { current } = bookmarkList
+      current.scrollTo(0, Math.min(offset, current.scrollHeight))
+    }
+  }
+  const handleToggleNavSquashable = () => {
+    setIsNavShouldSquash(!isNavShouldSquash)
+    if (isNavShouldSquash) {
+      setTimeout(() => navList.current.scrollToItem(pageNumber, 'center'))
+    } else {
+      navList.current.scrollToItem(0)
+    }
+  }
+  const handleOpenNavList = () => {
+    const { current } = navList
+    setSMenuStatus('nav')
+    setIsToolsActive(false)
+    current.scrollToItem(isNavShouldSquash ? 0 : pageNumber, 'center')
   }
   const handleClickSearchResult = (e: React.MouseEvent) => {
     let { target }: any = e
@@ -569,7 +612,7 @@ export default function Reader ({
             
             if (typeof offset === 'boolean') { return }
             if (renderMode === 'page') {
-              if (offset === 1 && renderCount === computTotalRenderCount()) {
+              if (offset === 1 && renderCount === computeTotalRenderCount()) {
                 handleChangePage(1)
                 return
               } else if (offset === -1 && renderCount === 0) {
@@ -596,6 +639,12 @@ export default function Reader ({
             break
           case 'L':
             setIsFocusingMode(!isFocusingMode)
+            if (isFocusingMode) {
+              handleMouseMoveTools()
+            } else {
+              setIsToolsActive(false)
+              clearTimeout(mouseEventTimer.current)
+            }
             break
           case 'O':
           case 'P':
@@ -629,13 +678,8 @@ export default function Reader ({
         setTextCache(content)
         content = content[href]
       }
-      new Promise((res, rej) => {
-        setContent(content)
-        setTimeout(res, 100)
-      })
-        .then(res => {
-          parseProg(progress)
-        })
+      setContent(content)
+      parseProg(progress)
     }
     ipcRenderer.on(LOAD_BOOK, loadBookListener)
 
@@ -815,7 +859,7 @@ export default function Reader ({
         {
           (() => {
             if (bookInfo.hash !== '' && renderMode === 'page') {
-              let total = (computTotalRenderCount() + 1).toString()
+              let total = (computeTotalRenderCount() + 1).toString()
               let current = (renderCount + 1).toString()
               return (<p
                 style={{
@@ -842,19 +886,17 @@ export default function Reader ({
           style={{
             display: 'flex',
             position: 'absolute',
-            left: '7px',
+            left: '2px',
             bottom: '7px',
             padding: '5px',
             borderRadius: '50%',
             color: styleCSS.color,
-            backgroundColor: styleCSS.backgroundColor,
-            transition: 'background-color .3s ease-out, color .3s ease-out',
             visibility: isFocusingMode ? 'visible' : 'hidden',
             userSelect: 'none',
             fontSize: '15px',
           }}
         >
-          <span className='ri-moon-fill' style={{ margin: 0 }}></span>
+          <span className="ri-moon-fill" style={{ margin: 0 }}></span>
         </span>
         <div
           dangerouslySetInnerHTML={{
@@ -1020,7 +1062,7 @@ export default function Reader ({
         </i>
         <DisabledSelectInput
           type="number"
-          className='reader-input'
+          className="reader-input"
           style={{ userSelect: 'none', fontSize: '14px', boxSizing: 'border-box' }}
           onInput={(e: any) => { setJumpValue(parseInt((e.target as HTMLInputElement).value)); handleMouseEnterTools() }}
           onBlur={handleJumpValueBoxBlur}
@@ -1333,41 +1375,46 @@ export default function Reader ({
         >
           <AutoSizer>
             {
-              ({ width, height }) => (
-                <FixedSizeList
-                  width={ width }
-                  height={ height }
-                  itemCount={ bookInfo.nav.length }
-                  itemSize={ 55 }
-                  ref={ navList }
-                >
-                  {
-                    ({index, style}) => {
-                      const { id, navLabel, href, isSub } = bookInfo.nav[index]
-                      const pIndex = bookInfo.spine.indexOf(id)
-                      const decodedNavLabel = decodeHTMLEntities(navLabel)
-                      return (
-                        <div
-                          style={ style }
-                          className={
-                            classNames(
-                              'common-active reader-nav-label',
-                              { 'reader-nav-sub': isSub },
-                              { 'reader-nav-label-active': pIndex === pageNumber },
-                            )
-                          }
-                          data-href={ href }
-                          data-index={ pIndex }
-                          key={ index }
-                          title={ decodedNavLabel }
-                        >
-                          <p>{ decodedNavLabel }</p>
-                        </div>
-                      )
+              ({ width, height }) => {
+                const nav = isNavShouldSquash
+                  ? bookInfo.nav.filter(({ isSub }) => !isSub)
+                  : bookInfo.nav
+                return (
+                  <FixedSizeList
+                    width={ width }
+                    height={ height }
+                    itemCount={ nav.length }
+                    itemSize={ 55 }
+                    ref={ navList }
+                  >
+                    {
+                      ({index, style}) => {
+                        const { id, navLabel, href, isSub } = nav[index]
+                        const pIndex = bookInfo.spine.indexOf(id)
+                        const decodedNavLabel = decodeHTMLEntities(navLabel)
+                        return (
+                          <div
+                            style={ style }
+                            className={
+                              classNames(
+                                'common-active reader-nav-label',
+                                { 'reader-nav-sub': isSub },
+                                { 'reader-nav-label-active': pIndex === pageNumber },
+                              )
+                            }
+                            data-href={ href }
+                            data-index={ pIndex }
+                            key={ index }
+                            title={ decodedNavLabel }
+                          >
+                            <p>{ decodedNavLabel }</p>
+                          </div>
+                        )
+                      }
                     }
-                  }
-                </FixedSizeList>
-              )
+                  </FixedSizeList>
+                )
+              }
             }
           </AutoSizer>
         </div>
@@ -1377,7 +1424,7 @@ export default function Reader ({
             top: '60px',
             left: 0,
             width: '100%',
-            height: 'calc(100% - 80px)',
+            height: 'calc(100% - 115px)',
             overflowY: 'auto',
             transform: !navMenuStatus
               ? 'translate3d(0, 0, 0)'
@@ -1385,6 +1432,7 @@ export default function Reader ({
             transition: 'transform .2s ease-out'
           }}
           onClick={ handleClickBookmark }
+          ref={ bookmarkList }
         >
           <div
             className="flex-box"
@@ -1419,6 +1467,30 @@ export default function Reader ({
               })
             }
           </div>
+        </div>
+        <div className="reader-nav-tools flex-box">
+          {
+            navMenuStatus
+            ? (
+              <span className="reader-tool common-active" onClick={handleToggleNavSquashable}>
+                { isNavShouldSquash ? '展开目录' : '折叠目录' }
+              </span>
+            )
+            : (
+              <span className="reader-tool common-active" onClick={handleEmptyBookmark}>
+                清空书签
+              </span>
+            )
+          }
+          <span className="reader-tool common-active" style={{ visibility: 'hidden' }}>
+            占位标签
+          </span>
+          <span className="reader-tool common-active" onClick={() => handleScrollToLimit(0)}>
+            返回顶部
+          </span>
+          <span className="reader-tool common-active" onClick={() => handleScrollToLimit(Infinity)}>
+            前往底部
+          </span>
         </div>
       </div>
     </div>

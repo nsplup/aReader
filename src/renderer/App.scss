@@ -243,7 +243,7 @@ input[type=number]::-webkit-outer-spin-button {
   height: 100%;
   overflow: hidden;
 
-  padding: 20px;
+  padding: 10px 25px 25px 25px;
 
   box-sizing: border-box;
   transition: background-color .3s ease-out, color .3s ease-out;
@@ -277,6 +277,7 @@ input[type=number]::-webkit-outer-spin-button {
 
   &-scroll {
     overflow-y: auto;
+    padding-right: 19px;
 
     & > div {
       display: inline;
@@ -313,7 +314,7 @@ input[type=number]::-webkit-outer-spin-button {
   user-select: none;
 
   background-color: $primary-color-pale;
-  transform: translate3d(0, 80px, 0);
+  transform: translate3d(0, 100px, 0);
   box-shadow: 0 0 10px 0 rgba(55, 55, 55, .2);
   
   transition: transform .15s ease-out;
@@ -393,6 +394,23 @@ input[type=number]::-webkit-outer-spin-button {
   }
   &-enabled {
     color: $primary-color-light;
+  }
+}
+.reader-nav-tools {
+  justify-content: space-between;
+  
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
+  box-sizing: border-box;
+
+  & .reader-tool {
+    padding: 8px 10px;
+    color: #909090;
   }
 }
 
@@ -635,8 +653,8 @@ input[type=number]::-webkit-outer-spin-button {
   height: 100%;
   overflow: hidden;
   user-select: none;
-  padding: 20px 0;
   padding-top: 60px;
+  padding-bottom: 55px;
   background: $primary-color-pale;
   box-sizing: border-box;
   opacity: 0;
