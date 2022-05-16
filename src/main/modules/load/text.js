@@ -5,7 +5,9 @@ const path = require('path')
 const fs = require('fs')
 
 const chunkSize = 1024 * 103 /** 最大分块大小 */
-const dirName = path.resolve('.', 'data')
+const DATA_PATH = process.env.WORKER_ENV === 'development'
+  ? path.resolve('./build/dist/dev/data')
+  : path.resolve('.', 'data')
 const _7zbin = require('./7zPath')
 
 
@@ -37,7 +39,7 @@ function loadTEXT (filePath, res, rej) {
     _7z.hash(path.resolve(filePath), { hashMethod: 'sha256', $bin: _7zbin })
       .on('data', (data) => {
         const { hash } = data
-        const bookPath = path.resolve(dirName, hash)
+        const bookPath = path.resolve(DATA_PATH, hash)
         const infomation = { hash }
 
         fs.readdir(bookPath, (err, files) => {

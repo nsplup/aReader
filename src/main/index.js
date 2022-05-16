@@ -18,7 +18,11 @@ function createWindow () {
     }
   })
   
-  win.loadFile('./build/dist/prod/index.html')
+  win.loadFile(
+    process.env.NODE_ENV === 'development'
+      ? './index.html'
+      : './build/dist/prod/index.html'
+  )
   win.webContents.setZoomFactor(0.9)
   win.on('closed',() => {
     win = null
@@ -28,7 +32,9 @@ function createWindow () {
 app.whenReady()
   .then(() => {
     createWindow()
-    // win.webContents.openDevTools()
+    if (process.env.NODE_ENV === 'development') {
+      win.webContents.openDevTools()
+    }
 
     /** 调试模式：打开开发者工具 */
     ipcMain.on(CODE_OPEN_DEV_TOOLS, () => win.webContents.openDevTools())

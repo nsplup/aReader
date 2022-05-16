@@ -1,6 +1,6 @@
 {
   "name": "areader",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "author": "Luke Pan",
   "main": "build/dist/prod/main.js",
   "build": {
@@ -33,7 +33,7 @@
     }
   },
   "scripts": {
-    "buildDev": "webpack --config webpack.dev.config.js && electron ./build/dist/dev/main.js",
+    "buildDev": "webpack --config webpack.dev.config.js && electron --debug ./build/dist/dev/main.js",
     "build": "webpack --config webpack.prod.config.js && electron-builder --dir"
   },
   "devDependencies": {

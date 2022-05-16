@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { FixedSizeList  } from 'react-window'
 import { HexColorPicker } from 'react-colorful'
 import AutoSizer from "react-virtualized-auto-sizer"
 import Slider from 'react-slider'
 import { classNames } from '@utils/classNames'
-import { debounce } from '@utils/debounce'
 import { formatTime } from '@utils/formatTime'
 import { throttle } from '@utils/throttle'
 import { LOAD_BOOK, READ_BOOK, SEARCH_RESULT, START_SEARCH, STOP_SEARCH, TOGGLE_FULLSCREEN } from '@constants'
@@ -98,19 +97,17 @@ const colorPlan = [
 ]
 const customPlan = ['#b7a1ff', '#2e003e']
 
-const defaultInfo: Infomation = {
-  title: '',
-  cover: null,
-  format: 'EPUB',
-  hash: '',
-  nav: [],
-  manifest: {},
-  createdTime: 0,
-  spine: [],
-  bookmark: { history: [], detail: [] }
+class DefaultInfo {
+  title = ''
+  cover: string | null = null
+  format: 'EPUB' | 'TEXT' = 'EPUB'
+  hash = ''
+  nav: Array<Nav> = []
+  manifest = {}
+  createdTime = 0
+  spine: Array<string> = []
+  bookmark: Bookmark = { history: [], detail: [] }
 }
-
-Object.freeze(defaultInfo)
 
 interface Props {
   fonts: Array<string>
@@ -150,7 +147,7 @@ export default function Reader ({
   const [backgroundColor, setBackgroundColor] = useState(customPlan[1])
   /** 状态属性 */
   const [sMenuStatus, setSMenuStatus] = useState(null) /** 可选值：null/nav/font/color/search */
-  const [bookInfo, setBookInfo] = useState<Infomation>(Object.assign({}, defaultInfo))
+  const [bookInfo, setBookInfo] = useState<Infomation>(new DefaultInfo())
   const [pageNumber, setPageNumber] = useState(0)
   const [navMenuStatus, setNavMenuStatus] = useState(true)
   const [isWaiting, setIsWaiting] = useState(false)
@@ -158,12 +155,40 @@ export default function Reader ({
   const [searchResult, setSearchResult] = useState([])
   const [isFullScreenEnabled, setIsFullScreenEnabled] = useState(false)
   const [isFocusingMode, setIsFocusingMode] = useState(false)
+  const [isToolsActive, setIsToolsActive] = useState(false)
   /** 书籍内容 */
   const [content, setContent] = useState('')
   const [textCache, setTextCache] = useState(null)
   const navMap = useRef(null)
   const handleCloseSMenu = () => {
     setSMenuStatus(null)
+  }
+
+  const [time, setTime] = useState(0)
+  const setTimeWithThrottle = useCallback(
+    throttle(() => {console.log(Date.now()); setTime(Date.now())}, 300),
+    []
+  )
+
+  const mouseEventTimer = useRef(null)
+  const DELAY = 3000
+  const handleMouseMoveTools = () => {
+    clearTimeout(mouseEventTimer.current)
+    setIsToolsActive(true)
+    setTimeWithThrottle()
+
+    mouseEventTimer.current = setTimeout(() => {
+      setIsToolsActive(false)
+    }, DELAY)
+  }
+  const handleMouseEnterTools = () => {
+    clearTimeout(mouseEventTimer.current)
+    setIsToolsActive(true)
+  }
+  const handleMouseLeaveTools = () => {
+    mouseEventTimer.current = setTimeout(() => {
+      setIsToolsActive(false)
+    }, DELAY)
   }
 
   const handleCloseReader = () => {
@@ -174,8 +199,10 @@ export default function Reader ({
     ipcRenderer.send(STOP_SEARCH)
     handleToggleFullScreen(false)
     document.body.style.overflow = 'auto'
+    clearTimeout(mouseEventTimer.current)
+    setIsToolsActive(false)
     setTimeout(() => {
-      setBookInfo(Object.assign({}, defaultInfo))
+      setBookInfo(new DefaultInfo())
       setTextCache(null)
       setPageNumber(0)
       setJumpValue(1)
@@ -205,12 +232,14 @@ export default function Reader ({
     setBookmarkCaller(Date.now())
   }
   const handleEmptyBookmark = () => {
-    let { bookmark } = bookInfo
-    bookmark = Object.assign({}, bookmark, {
-      detail: []
-    })
-    setBookInfo(bookInfo => Object.assign({}, bookInfo, { bookmark }))
-    setBookmarkCaller(Date.now())
+    if (bookInfo.bookmark.detail.length > 0) {
+      let { bookmark } = bookInfo
+      bookmark = Object.assign({}, bookmark, {
+        detail: []
+      })
+      setBookInfo(bookInfo => Object.assign({}, bookInfo, { bookmark }))
+      setBookmarkCaller(Date.now())
+    }
   }
 
   const contentEl = useRef<HTMLDivElement>(null)
@@ -338,34 +367,10 @@ export default function Reader ({
     }
   }
 
-  const [time, setTime] = useState(0)
-  const setTimeWithThrottle = throttle(() => setTime(Date.now()), 300)
-  const mouseEventTimer = useRef(null)
-  const DELAY = 3000
-  const [isToolsActive, setIsToolsActive] = useState(false)
-  const handleMouseMoveTools = () => {
-    clearTimeout(mouseEventTimer.current)
-    setIsToolsActive(true)
-    setTimeWithThrottle()
-
-    mouseEventTimer.current = setTimeout(() => {
-      setIsToolsActive(false)
-    }, DELAY)
-  }
-  const handleMouseEnterTools = () => {
-    clearTimeout(mouseEventTimer.current)
-    setIsToolsActive(true)
-  }
-  const handleMouseLeaveTools = () => {
-    mouseEventTimer.current = setTimeout(() => {
-      setIsToolsActive(false)
-    }, DELAY)
-  }
-
   const navList = useRef(null)
 
-  const handleJump = (href: string, progress = 0) => {
-    const { format, hash } = bookInfo
+  const handleJump = (href: string, progress = 0, bookInfomation?: Infomation) => {
+    const { format, hash } = bookInfomation || bookInfo
     /** 当格式为TEXT并存在缓存时从缓存获取书籍内容 */
     if (format === 'TEXT' && textCache) {
       setContent(textCache[href])
@@ -502,11 +507,13 @@ export default function Reader ({
     }
   }
   const handleToggleNavSquashable = () => {
-    setIsNavShouldSquash(!isNavShouldSquash)
-    if (isNavShouldSquash) {
-      setTimeout(() => navList.current.scrollToItem(pageNumber, 'center'))
-    } else {
-      navList.current.scrollToItem(0)
+    if (bookInfo.nav.length !== bookInfo.nav.filter(({ isSub }) => !isSub).length) {
+      setIsNavShouldSquash(!isNavShouldSquash)
+      if (isNavShouldSquash) {
+        setTimeout(() => navList.current.scrollToItem(pageNumber, 'center'))
+      } else {
+        navList.current.scrollToItem(0)
+      }
     }
   }
   const handleOpenNavList = () => {
@@ -539,13 +546,6 @@ export default function Reader ({
     }
   }
 
-  useEffect(() => {
-    if (typeof library === 'object' && currentBookHash.length > 0) {
-      const bookData = Object.assign({}, defaultInfo, library.data[currentBookHash])
-      setBookInfo(bookData)
-    }
-  }, [library, currentBookHash, isReaderActive])
-
   /** 历史记录、书签保存及上传 */
   useEffect(() => {
     if (typeof library === 'object' && isReaderActive) {
@@ -572,18 +572,18 @@ export default function Reader ({
   /** 获取书籍数据并跳转到相关章节 */
   useEffect(() => {
     if (typeof library === 'object' && currentBookHash.length > 0 && isReaderActive) {
-      const bookData = Object.assign({}, defaultInfo, library.data[currentBookHash])
+      const bookData = Object.assign(new DefaultInfo(), library.data[currentBookHash])
       setBookInfo(bookData)
       const { bookmark, spine, manifest } = bookData
       if (bookmark.history.length === 2) {
         const [pnum, prog] = bookmark.history
         const { href } = manifest[spine[pnum]]
   
-        handleJump(href, prog)
+        handleJump(href, prog, bookData)
         setPageNumber(pnum)
       } else {
         const { href } = manifest[spine[0]]
-        handleJump(href)
+        handleJump(href, 0, bookData)
         setPageNumber(0)
       }
     }
@@ -695,7 +695,7 @@ export default function Reader ({
     backgroundColor: '',
     cursor: '',
   })
-  const handleChangeStyle = debounce(() => {
+  const handleChangeColorStyle = () => {
     let color: string, bgColor: string
 
     if (cColorPlan === -1) {
@@ -709,14 +709,17 @@ export default function Reader ({
     
     setContentStyle(style => Object.assign({}, style, {
       color,
-      fontFamily,
-      fontSize: Math.floor(fontSize) + 'px',
       backgroundColor: bgColor
     }))
     setStyleCSS(CSS => Object.assign({}, CSS, { color, backgroundColor: bgColor }))
-  }, 150)
-  useEffect(handleChangeStyle, [
-    fontFamily, fontSize, textColor, backgroundColor, cColorPlan
+  }
+  useEffect(() => {
+    const timer = setTimeout(handleChangeColorStyle, 200)
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [
+    textColor, backgroundColor, cColorPlan
   ])
 
   const handleResetCustomPlan = () => {
@@ -728,10 +731,10 @@ export default function Reader ({
     setStyleCSS(CSS => Object.assign({}, CSS, { cursor: isToolsActive || sMenuStatus !== null ? 'auto' : 'none' }))
   }, [isToolsActive, sMenuStatus])
 
-  const [CSSText, setCSSText] = useState('')
+  const [ColorCSSText, setColorCSSText] = useState('')
   useEffect(() => {
     const { color, backgroundColor, cursor } = styleCSS
-    let computedCSSText = `
+    let colorCSSText = `
     .reader-wrapper * { cursor: ${cursor} };
     .reader-content::-webkit-scrollbar {
       width: 6px;
@@ -752,7 +755,13 @@ export default function Reader ({
       color: ${backgroundColor} !important;
       background-color: ${color} !important;
     }
+    `
+    setColorCSSText(colorCSSText)
+  }, [styleCSS, textIndent, lineHeight])
 
+  const [fontCSSText, setFontCSSText] = useState('')
+  const handleChangeFontStyle = () => {
+    const CSSText = `
     .reader-content > div > * {
       margin-bottom: ${lineHeight}px;
     }
@@ -760,8 +769,19 @@ export default function Reader ({
       width: ${textIndent}em;
     }
     `
-    setCSSText(computedCSSText)
-  }, [styleCSS, textIndent, lineHeight])
+    setContentStyle(style => Object.assign({}, style, {
+      fontFamily,
+      fontSize: fontSize + 'px',
+    }))
+    setFontCSSText(CSSText)
+    parseProg(progress)
+  }
+  useEffect(() => {
+    const timer = setTimeout(handleChangeFontStyle, 300)
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [fontFamily, fontSize, lineHeight, textIndent])
 
   /** 保存 .userconfig 设置 */
   useEffect(() => {
@@ -826,7 +846,8 @@ export default function Reader ({
         )
       }
     >
-      <style dangerouslySetInnerHTML={{ __html: CSSText }}></style>
+      <style dangerouslySetInnerHTML={{ __html: ColorCSSText }}></style>
+      <style dangerouslySetInnerHTML={{ __html: fontCSSText }}></style>
       <div
         className={
           classNames(
@@ -853,7 +874,7 @@ export default function Reader ({
             width: progress * 100 + '%',
             height: '6px',
             backgroundColor: styleCSS.color,
-            transition: 'width .3s ease, background .3s ease',
+            transition: 'width .15s ease-in-out, background .3s ease',
           }}
         ></div>
         {
@@ -1472,12 +1493,28 @@ export default function Reader ({
           {
             navMenuStatus
             ? (
-              <span className="reader-tool common-active" onClick={handleToggleNavSquashable}>
+              <span
+                className={
+                  classNames(
+                    'reader-tool common-active',
+                    { 'reader-tool-disabled': bookInfo.nav.length === bookInfo.nav.filter(({ isSub }) => !isSub).length }
+                  )
+                }
+                onClick={handleToggleNavSquashable}
+              >
                 { isNavShouldSquash ? '展开目录' : '折叠目录' }
               </span>
             )
             : (
-              <span className="reader-tool common-active" onClick={handleEmptyBookmark}>
+              <span
+                className={
+                  classNames(
+                    'reader-tool common-active',
+                    { 'reader-tool-disabled': bookInfo.bookmark.detail.length === 0 }
+                  )
+                }
+                onClick={handleEmptyBookmark}
+              >
                 清空书签
               </span>
             )

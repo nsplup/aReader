@@ -1,7 +1,3 @@
-const fs = require('fs')
-const getFileMimeType = require('./getFileMimeType')
-
-
 function convertImageToDataURL (buffer, mimeType) {
   const base64 = buffer.toString('base64')
 

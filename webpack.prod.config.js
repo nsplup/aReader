@@ -12,9 +12,10 @@ const base = merge(conf, {
 
 module.exports = [
   merge(base, {
+    mode: 'production',
     target: 'electron-main',
     entry: {
-      main: './src/main/prod.js',
+      main: './src/main/index.js',
     },
   }),
   merge(base, {

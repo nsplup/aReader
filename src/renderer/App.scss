@@ -384,7 +384,7 @@ input[type=number]::-webkit-outer-spin-button {
     visibility: hidden;
   }
   &-disabled {
-    color: rgba(50, 50, 50, .1);
+    color: rgba(50, 50, 50, .12) !important;
     background-color: unset !important;
     transform: unset !important;
 

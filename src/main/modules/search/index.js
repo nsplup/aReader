@@ -5,6 +5,9 @@ const promise_finish = require('./promise-extends')
 
 const { parentPort } = require('worker_threads')
 const offset = 30
+const DATA_PATH = process.env.WORKER_ENV === 'development'
+  ? path.resolve('./build/dist/dev/data')
+  : path.resolve('.', 'data')
 
 function matchAll (haystack, needle) {
   const result = []
@@ -72,7 +75,7 @@ parentPort.on('message', (message) => {
           id,
           findFile(
             path.basename(manifest[id].href),
-            path.resolve('./data', hash)
+            path.resolve(DATA_PATH, hash)
           )[0]
         ])
       }
@@ -103,7 +106,7 @@ parentPort.on('message', (message) => {
         })
     } else {
       const results = []
-      fs.readFile(path.resolve('./data', hash, '.content'), { encoding: 'utf-8' }, (err, data) => {
+      fs.readFile(path.resolve(DATA_PATH, hash, '.content'), { encoding: 'utf-8' }, (err, data) => {
         data = JSON.parse(data)
   
         for (let i = 0, len = spine.length; i < len; i++) {
