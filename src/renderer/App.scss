@@ -106,17 +106,13 @@ input[type=number]::-webkit-outer-spin-button {
 
 .launch-wrapper {
   flex-direction: column;
-  justify-content: flex-start;
-
+  justify-content: space-between;
   position: relative;
   z-index: 10;
-
   width: 100%;
-  min-height: 100%;
-
-  padding-bottom: 80px;
-
-  background-color: #ffffff;
+  height: 100%;
+  overflow: auto;
+  background-color: #fff;
   box-sizing: border-box;
 }
 
@@ -260,7 +256,6 @@ input[type=number]::-webkit-outer-spin-button {
       line-height: 2;
       font-family: inherit;
       word-break: break-word;
-      -webkit-column-break-inside: avoid;
 
       &::before {
         display: inline-block;

@@ -1,6 +1,6 @@
 {
   "name": "areader",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "author": "Luke Pan",
   "main": "build/dist/prod/main.js",
   "build": {

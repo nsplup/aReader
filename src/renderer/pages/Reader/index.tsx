@@ -166,7 +166,7 @@ export default function Reader ({
 
   const [time, setTime] = useState(0)
   const setTimeWithThrottle = useCallback(
-    throttle(() => {console.log(Date.now()); setTime(Date.now())}, 300),
+    throttle(() => setTime(Date.now()), 300),
     []
   )
 
@@ -198,7 +198,6 @@ export default function Reader ({
     setIsWaiting(false)
     ipcRenderer.send(STOP_SEARCH)
     handleToggleFullScreen(false)
-    document.body.style.overflow = 'auto'
     clearTimeout(mouseEventTimer.current)
     setIsToolsActive(false)
     setTimeout(() => {
@@ -318,6 +317,50 @@ export default function Reader ({
     }
   }
 
+  const parseProg = (prog: number) => {
+    if (renderMode === 'page') {
+      setRenderCount(Math.ceil(prog * computeTotalRenderCount()))
+    } else {
+      const { scrollHeight, offsetHeight } = contentEl.current
+      const computedHeight = scrollHeight - offsetHeight
+      contentEl.current.scrollTo({ left: 0, top: computedHeight * prog })
+    }
+    setProgress(prog)
+    /** 强制更新 */
+    setTime(Date.now())
+  }
+
+  useEffect(() => {
+    const tags = [
+      'rt',
+      'rp',
+      'rb',
+      'rtc',
+      'rbc',
+      'ruby',
+    ]
+    const { current } = renderEl
+    const children = Array.from(current.children)
+    
+    children.forEach(el => {
+        const tagCounts = tags.reduce((prevCount, tag) => {
+          return el.getElementsByTagName(tag).length + prevCount
+        }, 0)
+        if (tagCounts > 0) {
+          el.setAttribute('style', '-webkit-column-break-inside: avoid')
+        }
+      })
+
+    /** 强制刷新排版 */
+    const vEl = document.createElement('div')
+    vEl.setAttribute('style', 'width: 0.1px; height: 0.1px; visibility: hidden; margin: 0')
+    current.insertBefore(vEl, children[0])
+    const timer = setTimeout(() => { current.removeChild(vEl) })
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [content])
+
   /** 打开字体样式窗口事件 */
   const fontList = useRef(null)
   const handleOpenFontStyle = () => {
@@ -430,18 +473,6 @@ export default function Reader ({
     jumpValueBox.current.blur()
   }, [pageNumber, isToolsActive])
 
-  const parseProg = (prog: number) => {
-    if (renderMode === 'page') {
-      setRenderCount(Math.ceil(prog * computeTotalRenderCount()))
-    } else {
-      const { scrollHeight, offsetHeight } = contentEl.current
-      const computedHeight = scrollHeight - offsetHeight
-      contentEl.current.scrollTo({ left: 0, top: computedHeight * prog })
-    }
-    setProgress(prog)
-    /** 强制更新 */
-    setTime(Date.now())
-  }
 
   const [isNavShouldSquash, setIsNavShouldSquash] = useState(false)
   const handleClickNav = (e: React.MouseEvent) => {
@@ -574,6 +605,7 @@ export default function Reader ({
     if (typeof library === 'object' && currentBookHash.length > 0 && isReaderActive) {
       const bookData = Object.assign(new DefaultInfo(), library.data[currentBookHash])
       setBookInfo(bookData)
+      handleMouseMoveTools()
       const { bookmark, spine, manifest } = bookData
       if (bookmark.history.length === 2) {
         const [pnum, prog] = bookmark.history
@@ -586,6 +618,9 @@ export default function Reader ({
         handleJump(href, 0, bookData)
         setPageNumber(0)
       }
+    }
+    if (!isReaderActive) {
+      handleCloseReader()
     }
   }, [isReaderActive])
 
@@ -659,7 +694,7 @@ export default function Reader ({
     return () => {
       window.removeEventListener('keyup', hotkeySupport)
     }
-  }, [isReaderActive, renderMode, pageNumber, renderCount, sMenuStatus, isFullScreenEnabled, isFocusingMode])
+  }, [isReaderActive, renderMode, pageNumber, renderCount, sMenuStatus, isFullScreenEnabled, isFocusingMode, bookInfo])
 
   /** 构建映射表 */
   useEffect(() => {
@@ -757,7 +792,7 @@ export default function Reader ({
     }
     `
     setColorCSSText(colorCSSText)
-  }, [styleCSS, textIndent, lineHeight])
+  }, [styleCSS])
 
   const [fontCSSText, setFontCSSText] = useState('')
   const handleChangeFontStyle = () => {
@@ -1019,7 +1054,7 @@ export default function Reader ({
         onMouseEnter={ handleMouseEnterTools }
         onMouseLeave={ handleMouseLeaveTools }
       >
-        <i className="reader-tool common-active ri-arrow-left-line" onClick={ handleCloseReader }>
+        <i className="reader-tool common-active ri-arrow-left-line" onClick={ () => handleClose(false) }>
           <span className="reader-tool-tips">返回</span>
         </i>
         {

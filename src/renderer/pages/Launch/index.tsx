@@ -69,7 +69,6 @@ function Launch ({
       const bookHash = book.getAttribute('data-hash')
       setCurrentBook(bookHash)
       setIsReaderActive(true)
-      document.body.style.overflow = 'hidden'
     }
   }
 
@@ -134,8 +133,10 @@ function Launch ({
     /** 主线程请求书架数据事件 */
     const libraryListener = (event: Electron.IpcRendererEvent, library: Library) => {
       updateLibrary(library)
+      /** 优化首次打开书籍速度 */
+      setIsReaderActive(true)
+      setTimeout(() => setIsReaderActive(false), 1000)
       setTimeout(() => document.querySelector('#startup').className = 'startup-end', 1700)
-      setTimeout(() => document.body.style.overflowY = 'auto', 2500)
     }
     /** 主线程请求用户数据事件 */
     const userconfigListener = (event: Electron.IpcRendererEvent, userconfig: UserConfig) => {
@@ -264,9 +265,9 @@ function Launch ({
               || (library && library.shelf.length > 0)
                 ? 'none'
                 : '',
-            position: 'absolute',
             bottom: '80px',
             width: '100%',
+            margin: 'auto 0 0 0',
             flexDirection: 'column',
           }}
         >
@@ -278,8 +279,6 @@ function Launch ({
           style={{
             justifyContent: 'flex-end',
             alignItems: 'flex-end',
-            position: 'absolute',
-            bottom: '0',
             width: '100%',
             padding: '20px',
             boxSizing: 'border-box',
