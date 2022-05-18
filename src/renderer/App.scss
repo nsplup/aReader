@@ -239,7 +239,7 @@ input[type=number]::-webkit-outer-spin-button {
   height: 100%;
   overflow: hidden;
 
-  padding: 10px 25px 25px 25px;
+  padding: 35px;
 
   box-sizing: border-box;
   transition: background-color .3s ease-out, color .3s ease-out;
@@ -257,6 +257,7 @@ input[type=number]::-webkit-outer-spin-button {
       font-family: inherit;
       word-break: break-word;
 
+      transition: background-color .3s ease-out, color .3s ease-out;
       &::before {
         display: inline-block;
         height: 1em;
@@ -272,11 +273,10 @@ input[type=number]::-webkit-outer-spin-button {
 
   &-scroll {
     overflow-y: auto;
-    padding-right: 19px;
+    padding-right: 29px;
 
     & > div {
       display: inline;
-      padding-bottom: 20px;
     }
     & rt, & rtc {
       transform: translate3d(0, -15%, 0);
@@ -561,7 +561,7 @@ input[type=number]::-webkit-outer-spin-button {
         }
       }
       &-title {
-        width: 380px;
+        width: 100%;
         overflow: hidden;
         margin: 0;
         color: #505050;
@@ -572,7 +572,7 @@ input[type=number]::-webkit-outer-spin-button {
       &-text {
         display: -webkit-box;
         width: 100%;
-        height: 44px;
+        height: 22px;
         overflow: hidden;
         margin: 0;
         margin-top: 10px;
@@ -580,19 +580,23 @@ input[type=number]::-webkit-outer-spin-button {
         line-height: 135%;
         color: $common-text-description;
         text-overflow: ellipsis;
-        -webkit-line-clamp: 2;
+        -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
       }
-      &-prog {
+      &-count {
         position: absolute;
-        top: 12px;
+        bottom: 12px;
         right: 10px;
+        color: #888 !important;
 
         color: $common-text-description;
-        &::after {
-          content: '%';
+        &::before {
+          content: '#';
         }
       }
+    }
+    &-ky {
+      background-color: #fff18f;
     }
   }
   &-s-loading {
@@ -747,45 +751,48 @@ input[type=number]::-webkit-outer-spin-button {
 }
 
 .reader-bookmark {
+  flex-direction: column;
+
   position: relative;
   width: calc(100% - 40px);
-  overflow: hidden;
+  padding: 10px;
   margin: 0 auto;
-  padding: 20px;
-  padding-left: 40px;
-  padding-right: 50px;
 
   border-radius: 10px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   box-sizing: border-box;
 
   &:hover {
     background-color: rgba(50, 50, 50, .1);
   }
-  &::after {
-    display: block;
-    position: absolute;
-    left: 14px;
-    top: 0;
-    bottom: 0;
-    margin: auto;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 0 7.5px 10px 7.5px;
-    border-color: transparent transparent rgba(50, 50, 50, .3) transparent;
-    
-    content: '';
+  &-count {
+    position: relative;
+    right: 0;
+    margin: 0 0 0 auto;
+    color: #888888;
+    &::before {
+      content: '#';
+    }
   }
-  &-prog {
-    position: absolute;
-    right: 14px;
-    top: 0;
-    bottom: 0;
-    margin: auto;
-    height: 17px;
+  &-title {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  &-text {
+    display: -webkit-box;
+    width: 100%;
+    overflow: hidden;
+    margin: 10px 0;
+
     color: $common-text-description;
+  }
+  &-overflow {
+    text-overflow: ellipsis;
+    -webkit-line-clamp: 15;
+    -webkit-box-orient: vertical;
   }
 }
 

@@ -2,69 +2,89 @@ const fs = require('fs')
 const path = require('path')
 const findFile = require('./findFile')
 const promise_finish = require('./promise-extends')
-
+const convertEPUB = require('../convertEPUB')
 const { parentPort } = require('worker_threads')
-const offset = 30
 const DATA_PATH = process.env.WORKER_ENV === 'development'
   ? path.resolve('./build/dist/dev/data')
   : path.resolve('.', 'data')
 
-function matchAll (haystack, needle) {
-  const result = []
-  let index = 0
+const MAX_LENGTH = 10
+/** 非单引号、英文、数字、空格、中日韩字符 */
+const REGEXP = /[^\'\’\a-zA-Z0-9\s\u2E80-\u2FDF\u3040-\u318F\u31A0-\u31BF\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FFF\uA960-\uA97F\uAC00-\uD7FF]+/
+function sliceString (haystack, needle, maxLength) {
+  let index = haystack.indexOf(needle)
 
-  haystack = haystack.toLowerCase()
-  needle = needle.toLowerCase()
+  /** 不满足条件时跳出 */
+  if (index < maxLength || haystack.length < maxLength) { return haystack }
 
-  while ((index + needle.length) <= haystack.length) {
-    let n = haystack.slice(index).indexOf(needle)
+  /** 确保最少偏移量 */
+  index = Math.max(index - maxLength, 0)
 
-    if (n >= 0) {
-      result.push(n + index)
-      index += n + needle.length
-    } else {
-      index++
-    }
+  /** 向前查找，直到命中标点符号 */
+  let i = 1
+  while (i < maxLength && !REGEXP.test(haystack.charAt(index - i))) {
+    if (index - i < 0) { break }
+    i++
   }
+  index -= i
 
-  return result
+  /** 当下标不为零且左侧不为标点符号（排除成对标点情况）时，下标步进一 */
+  if (index !== 0 && !REGEXP.test(haystack.charAt(index - 1))) { index += 1 }
+
+  /** 如果下标大于等于二且左侧两个字符为标点符号且为重复标点时，下标步进一 */
+  if (index >= 2
+      && REGEXP.test(haystack.charAt(index - 1))
+      && haystack.charAt(index - 1) === haystack.charAt(index)
+  ) { index += 1 }
+
+  /** 如果命中字母则向前查找，直到命中非字母 */
+  let j = 0
+  while (index - j > 0 && /[a-z]/i.test(haystack.charAt(index - j))) { j++ }
+  /** 如果是字母则更新下标并步进一 */
+  if (j > 0) { index -= j; index += 1 }
+
+  return haystack.slice(index)
 }
 
-function sliceStr (str, indexes, kLen) {
-  const fragments = []
-  const isEnglish = /[\x00-\x7F]/g.test(str)
-  const computedOffset = isEnglish ? offset * 3 : offset
-
-  if (indexes.length === 1) {
-    const index = indexes[0]
-    return [str.slice(
-      Math.max(
-        0,
-        index - computedOffset
-      ),
-      index + computedOffset
-    )]
-  }
-  for (let i = 0, len = indexes.length; i < len - 1; i++) {
-    const front = Math.max(
-      0,
-      indexes[i] - computedOffset
+function computeString (haystack, needle, regExp) {
+  return (
+      haystack.length > MAX_LENGTH * 3
+      ? sliceString(haystack, needle, MAX_LENGTH)
+      : haystack
     )
-    let back = indexes[i] + computedOffset + 1
+    .trimStart()
+    .replace(regExp, fragment => {
+      return `<span class="s-m-search-ky">${fragment}</span>`
+    })
+}
 
-    if (back >= indexes[i + 1]) {
-      back += kLen
-      i++
-    }
-    fragments.push(str.slice(front, back))
-  }
-  return fragments
+function sortArray (array) {
+  const result = array.concat()
+
+  result.sort((a, b) => {
+    let aPN = a.pageNumber.toString(),
+        aLC = a.lineCount.toString(),
+        bPN = b.pageNumber.toString(),
+        bLC = b.lineCount.toString()
+    
+    aPN = '0'.repeat(10 - aPN.length) + aPN
+    aLC = '0'.repeat(10 - aLC.length) + aLC
+    bPN = '0'.repeat(10 - bPN.length) + bPN
+    bLC = '0'.repeat(10 - bLC.length) + bLC
+    return parseInt('1' + aPN + aLC) - parseInt('1' + bPN + bLC)
+  })
+
+  return result
 }
 
 parentPort.on('message', (message) => {
   const { bookInfo, keyword } = message
   const { spine, hash, manifest, format } = bookInfo
   const tasks = []
+
+  const keywords = keyword.split(/\s+/)
+  const REGEXP_KW = new RegExp(keywords.join('|'), 'gi')
+  const results = []
   
   try {
     if (format === 'EPUB') {
@@ -72,6 +92,7 @@ parentPort.on('message', (message) => {
       for (let i = 0, len = spine.length; i < len; i++) {
         const id = spine[i]
         resolvedPaths.push([
+          i,
           id,
           findFile(
             path.basename(manifest[id].href),
@@ -81,48 +102,64 @@ parentPort.on('message', (message) => {
       }
   
       for (let i = 0, len = resolvedPaths.length; i < len; i++) {
-        const filePath = resolvedPaths[i][1]
+        const [pageNumber, id, filePath] = resolvedPaths[i]
         tasks.push(new Promise((res, rej) => {
-          const tmp = { id: resolvedPaths[i][0], result: [] }
           fs.readFile(filePath, { encoding: 'utf-8' }, (err, data) => {
-            data = data.replace(/(<\/?[^>]+>)|([\r\n])/g, '')
-            let result = matchAll(data, keyword)
-            if (result.length > 0) {
-              let progress = result.map(n => n / data.length)
+            if (err) { console.log(err); rej() }
 
-              result = sliceStr(data, result, keyword.length)
-              result = result.map((str, index) => ([str, progress[index]]))
-              res(Object.assign(tmp, { result }))
+            const lines = convertEPUB(data)
+              .map(node => node.innerText)
+            if (REGEXP_KW.test(lines.join('\n'))) {
+              keywords.forEach(kw => {
+                lines.forEach((line, index) => {
+                  if (line.toLocaleLowerCase().includes(kw.toLocaleLowerCase())) {
+                    results.push({
+                      pageNumber,
+                      id,
+                      lineCount: index,
+                      text: computeString(line, kw, REGEXP_KW)
+                    })
+                  }
+                })
+              })
+              res()
             } else {
               rej()
             }
           })
         }))
       }
-  
+
       promise_finish(tasks)
         .then(({ resolve }) => {
-          parentPort.postMessage({ result: resolve })
+          parentPort.postMessage({ result: sortArray(results) })
         })
     } else {
-      const results = []
       fs.readFile(path.resolve(DATA_PATH, hash, '.content'), { encoding: 'utf-8' }, (err, data) => {
         data = JSON.parse(data)
   
         for (let i = 0, len = spine.length; i < len; i++) {
           const id = spine[i]
           const { href } = manifest[id]
-          const text = data[href].replace(/[\r\n]/g, '')
-          let result = matchAll(text, keyword)
-          
-          if (result.length > 0) {
-            let progress = result.map(n => n / text.length)
-            result = sliceStr(text, result, keyword.length)
-            result = result.map((str, index) => ([str, progress[index]]))
-            results.push({ id, result })
+          const content = data[href]
+          const lines = content.split(/[\r\n]+/g)
+
+          if (REGEXP_KW.test(content)) {
+            keywords.forEach(kw => {
+              lines.forEach((line, index) => {
+                if (line.toLocaleLowerCase().includes(kw.toLocaleLowerCase())) {
+                  results.push({
+                    pageNumber: i,
+                    id,
+                    lineCount: index,
+                    text: computeString(line, kw, REGEXP_KW)
+                  })
+                }
+              })
+            })
           }
         }
-        parentPort.postMessage({ result: results })
+        parentPort.postMessage({ result: sortArray(results) })
       })
     }
   } catch (err) {

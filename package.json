@@ -1,6 +1,6 @@
 {
   "name": "areader",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "author": "Luke Pan",
   "main": "build/dist/prod/main.js",
   "build": {
@@ -71,11 +71,12 @@
     "webpack-merge": "^5.7.3"
   },
   "dependencies": {
-    "fast-xml-parser": "^3.19.0",
+    "fast-xml-parser": "^4.0.7",
     "font-list": "^1.2.14",
     "iconv-lite": "^0.6.3",
     "jschardet": "^3.0.0",
     "node-7z": "^2.1.2",
+    "node-html-parser": "^5.3.3",
     "react": "^16.13.1",
     "react-colorful": "^5.2.0",
     "react-dom": "^16.13.1",

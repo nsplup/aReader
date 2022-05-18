@@ -29,9 +29,17 @@ interface Infomation {
 }
 
 interface Bookmark {
-  /** 格式：[页码，页面百分比] */
-  history: Array<number>
-  detail: number[][]
+  trace: { pageNumber: number, lineCount: number }
+	detail: {
+    /** 页码： 行数数组，文本 */
+    [pageNumber: string]: BookmarkDetail[]
+  }
+}
+
+interface BookmarkDetail {
+  range: number[]
+  text: string
+  overflow: boolean
 }
 
 interface UserConfig {

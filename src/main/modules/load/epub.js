@@ -1,5 +1,5 @@
 const _7z = require('node-7z')
-const fxp = require('fast-xml-parser')
+const { XMLParser } = require('fast-xml-parser')
 const path = require('path')
 const fs = require('fs')
 const findFile = require('./findFile')
@@ -42,7 +42,8 @@ function loadEPUB (filePath, res, rej) {
               }
               /** 从META-INF获取content.opf路径 */
               const option = { attributeNamePrefix : '', ignoreAttributes: false }
-              const contentPath = fxp.parse(data, option)
+              const parser = new XMLParser(option)
+              const contentPath = parser.parse(data)
                 .container
                 .rootfiles
                 .rootfile['full-path']
@@ -58,7 +59,7 @@ function loadEPUB (filePath, res, rej) {
                   }
 
                   const filename = path.basename(filePath).split('.')[0]
-                  const content = fxp.parse(data, option).package
+                  const content = parser.parse(data).package
                   const { metadata, manifest, spine } = content
                   const cover = [].concat(metadata.meta)
                     .filter((meta) => meta && meta.name === 'cover')[0]
@@ -169,7 +170,7 @@ function loadEPUB (filePath, res, rej) {
                           return results
                         }
                         try {
-                          nav = formatNav(fxp.parse(data, option).ncx.navMap.navPoint)
+                          nav = formatNav(parser.parse(data, option).ncx.navMap.navPoint)
                         } catch (err) {
                           rej([filePath, err])
                         }

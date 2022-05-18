@@ -146,23 +146,12 @@ function Launch ({
     ipcRenderer.on(LOAD_USERCONFIG, userconfigListener)
     ipcRenderer.on(START_IMPORT, startImportListener)
 
-    /** 屏蔽空格滚动 */
-    const banSpaceKey = (e: KeyboardEvent) => {
-      const { code } = e
-      if (code.toUpperCase() === 'SPACE') {
-        e.preventDefault()
-      }
-    }
-
-    window.addEventListener('keypress', banSpaceKey)
-
     return () => {
       document.body.removeEventListener('contextmenu', handleContextmenu)
       document.body.removeEventListener('click', handleEnableReader)
       ipcRenderer.off(LOAD_LIBRARY, libraryListener)
       ipcRenderer.off(LOAD_USERCONFIG, userconfigListener)
       ipcRenderer.off(START_IMPORT, startImportListener)
-      window.removeEventListener('keypress', banSpaceKey)
     }
   }, [])
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { FixedSizeList  } from 'react-window'
 import { HexColorPicker } from 'react-colorful'
 import AutoSizer from "react-virtualized-auto-sizer"
@@ -6,9 +6,12 @@ import Slider from 'react-slider'
 import { classNames } from '@utils/classNames'
 import { formatTime } from '@utils/formatTime'
 import { throttle } from '@utils/throttle'
+import { clamp } from '@utils/clamp'
+import { getComplementaryColor } from '@utils/getComplementaryColor'
 import { LOAD_BOOK, READ_BOOK, SEARCH_RESULT, START_SEARCH, STOP_SEARCH, TOGGLE_FULLSCREEN } from '@constants'
 
 import { decodeHTMLEntities } from '@utils/decodeEntities'
+import { getStringCount } from '@utils/getStringCount'
 
 const searchPlaceholder = require('@static/illustration/undraw_Web_search_re_efla.svg').default
 
@@ -72,7 +75,7 @@ const DisabledSelectInput = React.forwardRef((props: any, ref) => {
           left: 0,
           cursor: 'text',
           overflow: 'hidden',
-          whiteSpace: 'break-spaces',
+          whiteSpace: 'nowrap',
           textOverflow: 'ellipsis',
           height: '100%',
         })}
@@ -84,6 +87,52 @@ const DisabledSelectInput = React.forwardRef((props: any, ref) => {
     </div>
   )
 })
+
+const isInViewPort = (element: HTMLElement) => {
+  const viewWidth = window.innerWidth || document.documentElement.clientWidth
+  const viewHeight = window.innerHeight || document.documentElement.clientHeight
+  const {
+    top,
+    right,
+    bottom,
+    left,
+  } = element.getBoundingClientRect()
+
+  return (
+    top >= 0 &&
+    left >= 0 &&
+    right <= viewWidth &&
+    bottom <= viewHeight
+  )
+}
+
+const convertContent = (content: string) => {
+  const lines = content.split(/[\r\n]+/)
+  let startIndex, endIndex
+  for (let i = 0, len = lines.length; i < len; i++) {
+    if (lines[i].trim().length > 0) {
+      startIndex = i
+      break
+    }
+  }
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (lines[i].trim().length > 0) {
+      endIndex = i + 1
+      break
+    }
+  }
+
+  return lines
+    .slice(startIndex, endIndex)
+    .map(str => {
+      const line = str.trim()
+      return line.length > 0
+      ? `<p>${line}</p>`
+      : '<br>'
+    })
+    .join('')
+}
+
 
 const colorPlan = [
   ['#393939', '#ffffff'],
@@ -106,7 +155,10 @@ class DefaultInfo {
   manifest = {}
   createdTime = 0
   spine: Array<string> = []
-  bookmark: Bookmark = { history: [], detail: [] }
+  bookmark: Bookmark = {
+    trace: { pageNumber: 0, lineCount: 0 },
+    detail: {}
+  }
 }
 
 interface Props {
@@ -149,6 +201,7 @@ export default function Reader ({
   const [sMenuStatus, setSMenuStatus] = useState(null) /** 可选值：null/nav/font/color/search */
   const [bookInfo, setBookInfo] = useState<Infomation>(new DefaultInfo())
   const [pageNumber, setPageNumber] = useState(0)
+  const [lineCount, setLineCount] = useState(0)
   const [navMenuStatus, setNavMenuStatus] = useState(true)
   const [isWaiting, setIsWaiting] = useState(false)
   const [keyword, setKeyword] = useState('')
@@ -156,6 +209,7 @@ export default function Reader ({
   const [isFullScreenEnabled, setIsFullScreenEnabled] = useState(false)
   const [isFocusingMode, setIsFocusingMode] = useState(false)
   const [isToolsActive, setIsToolsActive] = useState(false)
+  const [highlightCount, setHighlightCount] = useState(-1)
   /** 书籍内容 */
   const [content, setContent] = useState('')
   const [textCache, setTextCache] = useState(null)
@@ -163,6 +217,15 @@ export default function Reader ({
   const handleCloseSMenu = () => {
     setSMenuStatus(null)
   }
+
+  const contentEl = useRef<HTMLDivElement>(null)
+  const renderEl = useRef<HTMLDivElement>(null)
+  const getNodeList = () => (
+    renderEl.current
+    ? Array.from(renderEl.current.children)
+      .filter(node => (node as HTMLElement).getAttribute('not-content') !== 'true')
+    : []
+  )
 
   const [time, setTime] = useState(0)
   const setTimeWithThrottle = useCallback(
@@ -200,6 +263,7 @@ export default function Reader ({
     handleToggleFullScreen(false)
     clearTimeout(mouseEventTimer.current)
     setIsToolsActive(false)
+    setHighlightCount(-1)
     setTimeout(() => {
       setBookInfo(new DefaultInfo())
       setTextCache(null)
@@ -215,44 +279,100 @@ export default function Reader ({
   }
   const [bookmarkCaller, setBookmarkCaller] = useState(0)
   const handleBookmark = (isRemoveEvent: boolean) => {
-    let { bookmark } = bookInfo
+    const newBookInfo = new DefaultInfo()
+    const { trace, detail } = bookInfo.bookmark
+    const currentBookmarks = Array.isArray(detail[pageNumber])
+      ? detail[pageNumber]
+      : []
 
     if (isRemoveEvent) {
-      bookmark.detail = bookmark.detail.filter(([spine, prog]) => 
-        !(spine === pageNumber && (Math.abs((prog * 100) - (progress * 100)) < 3))
-      )
+      newBookInfo.bookmark.detail[pageNumber] = currentBookmarks
+        .filter(({ range }) => !range.includes(lineCount))
     } else {
-      bookmark.detail = bookmark.detail.concat([[pageNumber, progress]])
+      const nodeList = getNodeList()
+      const computedChildren = nodeList
+        .map((el, lineCount) => [lineCount, el])
+        .filter(([lineCount, el]) => isInViewPort(el as HTMLElement))
+        .slice(-3)
+      const range = Array.from(
+        new Set(
+          computedChildren
+            .map(([lineCount, el]) => lineCount)
+            .concat(clamp(lineCount, 0, nodeList.length - 1))
+        )
+      )
+      let text = (computedChildren[computedChildren.length - 1][1] as HTMLElement)
+        .innerText
+        .trim()
+
+      range.sort((a, b) => (a as number) - (b as number))
+      newBookInfo.bookmark.detail[pageNumber] = [].concat(
+        currentBookmarks,
+        {
+          range,
+          text,
+          overflow: getStringCount(text) >= 500
+        }
+      )
     }
-    bookmark = Object.assign({}, bookmark, {
-      detail: [...bookmark.detail]
-    })
-    setBookInfo(bookInfo => Object.assign({}, bookInfo, { bookmark }))
+    setBookInfo(bookInfo => Object.assign(
+      new DefaultInfo(),
+      bookInfo,
+      { bookmark: {
+        trace: { ...trace },
+        detail: Object.assign({}, detail, newBookInfo.bookmark.detail)
+      } }
+    ))
     setBookmarkCaller(Date.now())
   }
   const handleEmptyBookmark = () => {
-    if (bookInfo.bookmark.detail.length > 0) {
-      let { bookmark } = bookInfo
-      bookmark = Object.assign({}, bookmark, {
-        detail: []
-      })
-      setBookInfo(bookInfo => Object.assign({}, bookInfo, { bookmark }))
+    const { trace, detail } = bookInfo.bookmark
+    const totalBookmarkLength = Object.entries(detail)
+      .reduce((prev, current) => (prev + current[1].length), 0)
+    if (totalBookmarkLength > 0) {
+      setBookInfo(bookInfo => Object.assign(
+        new DefaultInfo(),
+        bookInfo,
+        {
+          bookmark: {
+            trace: { ...trace },
+            detail: {}
+          }
+        }
+      ))
       setBookmarkCaller(Date.now())
     }
   }
 
-  const contentEl = useRef<HTMLDivElement>(null)
-  const renderEl = useRef<HTMLDivElement>(null)
-  const handleRestScroll = () => {
-    contentEl.current.scrollTo(0, 0)
-  }
   const [renderCount, setRenderCount] = useState(0)
-  const [progress, setProgress] = useState(0)
+  const getTraceElement = () => {
+    const { current } = renderEl
+    const computedChildren = Array.from(current.children)
+      .filter(node => (node as HTMLElement).getAttribute('not-content') !== 'true')
+      .map((el, lineCount) => [lineCount, el])
+      .filter(([lineCount, el]) => isInViewPort(el as HTMLElement))
+    
+    const { length } = computedChildren
+    const lastNode = computedChildren[length - 1]
+
+    return Array.isArray(lastNode)
+      ? lastNode
+      : [0, 0, null]
+  }
+  const convertTraceToLineCount = useCallback((() => {
+    let timer: any
+    return () => {
+      clearTimeout(timer)
+      setTimeout(() => {
+        const [lineCount] = getTraceElement()
+        setLineCount(lineCount as number)
+      }, 50)
+    }
+  })(), [renderMode])
   const computeTotalRenderCount = () => {
     const { current } = renderEl
     const { offsetWidth } = current
-
-    const nodeList = Array.from(current.childNodes)
+    const nodeList = getNodeList()
     const { length } = nodeList
     if (length > 0) {
       const lastNode = nodeList[length - 1]
@@ -266,16 +386,9 @@ export default function Reader ({
   const handleChangeRenderCount = (offset: number) => {
     if (renderMode === 'page') {
       const totalCount = computeTotalRenderCount()
-      const computedCount = Math.max(
-        0,
-        Math.min(
-          renderCount + offset,
-          totalCount
-        )
-      )
+      const computedCount = clamp(renderCount + offset, 0, totalCount)
       setRenderCount(computedCount)
-      let prog = computedCount / totalCount
-      setProgress(isNaN(prog) ? 0 : prog)
+      convertTraceToLineCount()
     }
   }
   const handleWheel = (e: React.WheelEvent) => {
@@ -284,51 +397,67 @@ export default function Reader ({
       deltaY > 0 ? 1 : -1
     )
   }
-  const handleScroll = () => {
-    if (renderMode === 'scroll') {
-      const { current } = contentEl
-      const { scrollHeight, scrollTop, offsetHeight } = current
-      const computedHeight = scrollHeight - offsetHeight
 
-      let prog = scrollTop / computedHeight
-      setProgress(isNaN(prog) ? 0 : prog)
+  const eventLock = useRef(false)
+  const setEventLock = (value: boolean) => {
+    eventLock.current = value
+  }
+  const resetEventLockTimer = useRef(null)
+  const handleScroll = (e: any) => {
+    clearTimeout(resetEventLockTimer.current)
+    resetEventLockTimer.current = setTimeout(() => {
+      setEventLock(false)
+    }, 300)
+    if (renderMode === 'scroll' && !eventLock.current) {
+      convertTraceToLineCount()
     }
   }
+
+  const parseLineCount = (lineCount: number) => {
+    const { current } = renderEl
+    const { offsetWidth } = current
+    const nodeList = getNodeList()
+    const targetLine = nodeList[
+      clamp(lineCount, 0, nodeList.length - 1)
+    ] as HTMLElement
+    if (targetLine) {
+      if (renderMode === 'page') {
+        setRenderCount(Math.floor(targetLine.offsetLeft / (offsetWidth + 100)))
+      } else {
+        const { current } = contentEl
+
+        switch (lineCount) {
+          case 0:
+            current.scrollTo(0, 0)
+            break
+          case Infinity:
+            current.scrollTo(0, current.scrollHeight)
+            break
+          default:
+            // targetLine.scrollIntoView(false)
+            current.scrollTo(0, targetLine.offsetTop - current.offsetHeight)
+        }
+      }
+    }
+  }
+
   const handleToggleRenderMode = () => {
     if (renderMode === 'scroll') {
       setRenderMode('page')
     } else {
       setRenderMode('scroll')
     }
-    setRenderCount(0)
-    handleRestScroll()
-    setProgress(0)
   }
-  const handleResize = () => {
-    if (renderMode === 'page') {
-      const totalCount = computeTotalRenderCount()
-      const computedCount = Math.floor(progress * totalCount)
-      setRenderCount(computedCount)
-
-      let prog = computedCount / totalCount
-      setProgress(isNaN(prog) ? 0 : prog)
-      /** 强制更新 */
-      setTime(Date.now())
+  
+  useEffect(() => {
+    setEventLock(true)
+    const timer = setTimeout(() => {
+      parseLineCount(lineCount)
+    }, 20)
+    return () => {
+      clearTimeout(timer)
     }
-  }
-
-  const parseProg = (prog: number) => {
-    if (renderMode === 'page') {
-      setRenderCount(Math.ceil(prog * computeTotalRenderCount()))
-    } else {
-      const { scrollHeight, offsetHeight } = contentEl.current
-      const computedHeight = scrollHeight - offsetHeight
-      contentEl.current.scrollTo({ left: 0, top: computedHeight * prog })
-    }
-    setProgress(prog)
-    /** 强制更新 */
-    setTime(Date.now())
-  }
+  }, [renderMode])
 
   useEffect(() => {
     const tags = [
@@ -354,6 +483,7 @@ export default function Reader ({
     /** 强制刷新排版 */
     const vEl = document.createElement('div')
     vEl.setAttribute('style', 'width: 0.1px; height: 0.1px; visibility: hidden; margin: 0')
+    vEl.setAttribute('not-content', 'true')
     current.insertBefore(vEl, children[0])
     const timer = setTimeout(() => { current.removeChild(vEl) })
     return () => {
@@ -403,24 +533,26 @@ export default function Reader ({
       ipcRenderer.send(keyword.toUpperCase().slice(2, -2))
       return
     }
-    if (keyword.length > 0) {
+    const trimedKeyword = keyword.trim()
+    if (trimedKeyword.length > 0) {
       setSearchResult([])
       setIsWaiting(true)
-      ipcRenderer.send(START_SEARCH, { bookInfo, keyword })
+      ipcRenderer.send(START_SEARCH, { bookInfo, keyword: trimedKeyword })
     }
   }
 
   const navList = useRef(null)
 
-  const handleJump = (href: string, progress = 0, bookInfomation?: Infomation) => {
+  const handleJump = (href: string, lineCount = 0, bookInfomation?: Infomation) => {
     const { format, hash } = bookInfomation || bookInfo
     /** 当格式为TEXT并存在缓存时从缓存获取书籍内容 */
     if (format === 'TEXT' && textCache) {
-      setContent(textCache[href])
-      parseProg(progress)
+      setContent(convertContent(textCache[href] as string))
+      setTimeout(() => parseLineCount(lineCount))
+      setLineCount(clamp(lineCount, 0, getNodeList().length - 1))
     } else {
       ipcRenderer.send(READ_BOOK, {
-        progress,
+        lineCount,
         href,
         hash,
         format,
@@ -428,16 +560,13 @@ export default function Reader ({
     }
   }
 
-  const handleChangePage = (offset: number, progress = 0) => {
+  const handleChangePage = (offset: number, lineCount = 0) => {
     const { spine, manifest } = bookInfo
-    offset = Math.min(
-      spine.length - 1,
-      Math.max(0, offset + pageNumber)
-    )
+    offset = clamp(offset + pageNumber, 0, spine.length - 1)
 
     /** 处理边界情况 */
     if (offset !== pageNumber) {
-      handleJump(manifest[spine[offset]].href, progress)
+      handleJump(manifest[spine[offset]].href, lineCount)
       setPageNumber(offset)
       setJumpValue(offset + 1)
     }
@@ -459,10 +588,7 @@ export default function Reader ({
       setJumpValue(pageNumber + 1)
     } else {
       const { spine } = bookInfo
-      let newJumpValue = Math.min(
-        spine.length - 1,
-        Math.max(0, jumpValue - 1)
-      ) + 1
+      let newJumpValue = clamp(jumpValue, 1, spine.length)
       setJumpValue(newJumpValue)
       /** 输入框数据未被正确更新的权宜之计 */
       jumpValueBox.current.value = newJumpValue
@@ -498,19 +624,21 @@ export default function Reader ({
         setTimeout(() => navList.current.scrollToItem(index, 'center'))
       }
     }
+    /** 强制刷新组件 */
+    setTime(Date.now())
   }
-  const handleClickBookmark = (e: React.MouseEvent) => {
+  const handleClickToJump = (e: React.MouseEvent) => {
     let { target }: any = e
-    let prog = target.getAttribute('data-prog')
+    let lineCount = target.getAttribute('data-line-count')
 
     /** 处理事件目标 */
-    if (!prog) {
+    while (!lineCount && target.parentElement) {
       target = target.parentElement
-      prog = target.getAttribute('data-href')
+      lineCount = target.getAttribute('data-line-count')
     }
 
-    if (prog) {
-      prog = parseFloat(prog)
+    if (lineCount) {
+      lineCount = parseInt(lineCount)
       const { spine } = bookInfo
       const href = target.getAttribute('data-href')
       const id = target.getAttribute('data-id')
@@ -518,14 +646,21 @@ export default function Reader ({
       const cId = spine[pageNumber]
 
       if (id !== cId) {
-        handleJump(href, prog)
+        handleJump(href, lineCount)
         setPageNumber(index)
         setJumpValue(index + 1)
       } else {
-        parseProg(prog)
+        parseLineCount(lineCount)
+        setLineCount(clamp(lineCount, 0, getNodeList().length - 1))
       }
+      setHighlightCount(lineCount)
+      setTimeout(() => {
+        window.addEventListener('click', () => setHighlightCount(-1), { once: true })
+      })
       handleCloseSMenu()
     }
+    /** 强制刷新组件 */
+    setTime(Date.now())
   }
   const bookmarkList = useRef(null)
   const handleScrollToLimit = (offset: number) => {
@@ -553,52 +688,40 @@ export default function Reader ({
     setIsToolsActive(false)
     current.scrollToItem(isNavShouldSquash ? 0 : pageNumber, 'center')
   }
-  const handleClickSearchResult = (e: React.MouseEvent) => {
-    let { target }: any = e
-    let href = target.getAttribute('data-href')
-
-    /** 处理事件目标 */
-    if (!href) {
-      target = target.parentElement
-      href = target.getAttribute('data-href')
-    }
-
-    if (href) {
-      const prog = parseFloat(target.getAttribute('data-prog'))
-      const id = target.getAttribute('data-id')
-      const index = bookInfo.spine.indexOf(id)
-      if (index !== pageNumber) {
-        handleJump(href, prog)
-        setPageNumber(index)
-        setJumpValue(index + 1)
-      } else {
-        parseProg(prog)
-      }
-    }
-  }
 
   /** 历史记录、书签保存及上传 */
   useEffect(() => {
     if (typeof library === 'object' && isReaderActive) {
-      let { bookmark, hash } = bookInfo
-      bookmark = Object.assign({}, bookmark, {
-        history: [pageNumber, progress]
-      })
+      const { hash, bookmark } = bookInfo
+      const { detail } = bookmark
+      const newBookmark: Bookmark = {
+        trace: { pageNumber, lineCount },
+        detail: { ...detail }
+      }
+
       const { data } = library
   
-      data[hash] = Object.assign({}, bookInfo, { bookmark })
+      data[hash] = Object.assign(new DefaultInfo(), bookInfo, { bookmark: newBookmark })
       handleChangeLibrary(Object.assign({}, library, { data }))
     }
-  }, [progress, pageNumber, bookmarkCaller])
+  }, [lineCount, pageNumber, bookmarkCaller])
 
-  /** page模式下窗口变换事件处理 */
+  /** 窗口变换事件处理 */
+  const resizeTimer = useRef(null)
+  const handleResize = () => {
+    setEventLock(true)
+    clearTimeout(resizeTimer.current)
+    resizeTimer.current = setTimeout(() => {
+      parseLineCount(lineCount)
+    }, 300)
+  }
+
   useEffect(() => {
     window.addEventListener('resize', handleResize)
-
     return () => {
       window.removeEventListener('resize', handleResize)
     }
-  }, [progress])
+  }, [lineCount])
 
   /** 获取书籍数据并跳转到相关章节 */
   useEffect(() => {
@@ -607,17 +730,14 @@ export default function Reader ({
       setBookInfo(bookData)
       handleMouseMoveTools()
       const { bookmark, spine, manifest } = bookData
-      if (bookmark.history.length === 2) {
-        const [pnum, prog] = bookmark.history
-        const { href } = manifest[spine[pnum]]
-  
-        handleJump(href, prog, bookData)
-        setPageNumber(pnum)
-      } else {
-        const { href } = manifest[spine[0]]
-        handleJump(href, 0, bookData)
-        setPageNumber(0)
-      }
+      const { pageNumber, lineCount } = bookmark.trace
+      const { href } = manifest[spine[pageNumber]]
+
+      setEventLock(true)
+      handleJump(href, lineCount, bookData)
+      setPageNumber(pageNumber)
+      /** 强制刷新组件 */
+      setTime(Date.now())
     }
     if (!isReaderActive) {
       handleCloseReader()
@@ -651,7 +771,7 @@ export default function Reader ({
                 handleChangePage(1)
                 return
               } else if (offset === -1 && renderCount === 0) {
-                handleChangePage(-1, 1)
+                handleChangePage(-1, Infinity)
                 return
               }
               handleChangeRenderCount(offset)
@@ -666,10 +786,10 @@ export default function Reader ({
                 handleChangePage(1)
                 return
               } else if (offset === -1 && scrollTop === 0) {
-                handleChangePage(-1, 1)
+                handleChangePage(-1, Infinity)
                 return
               }
-              current.scrollTo({ top: distance * rate, behavior: 'smooth' })
+              current.scrollTo({ top: distance * rate })
             }
             break
           case 'L':
@@ -685,6 +805,8 @@ export default function Reader ({
           case 'P':
             const pageOffset = (key === 'O' && -1) || (key === 'P' && 1)
             handleChangePage(pageOffset)
+            /** 重置高亮行 */
+            setHighlightCount(-1)
             break
         }
       }
@@ -702,7 +824,7 @@ export default function Reader ({
     bookInfo.nav.forEach(({ id, navLabel }) => { navMap.current[id] = navLabel })
 
     const loadBookListener = (event: Electron.IpcRendererEvent, {
-      content, status, href, progress, format
+      content, status, href, lineCount, format
     }: any) => {
       if (status === 'fail') {
         handleToast(['缓存文件已丢失，请重新导入书籍。'])
@@ -711,17 +833,22 @@ export default function Reader ({
       }
       if (format === 'TEXT') {
         setTextCache(content)
-        content = content[href]
+        content = convertContent(content[href] as string)
       }
       setContent(content)
-      parseProg(progress)
+      setTimeout(() => {
+        parseLineCount(lineCount)
+        /** 强制刷新组件 */
+        setTime(Date.now())
+      })
+      setLineCount(clamp(lineCount, 0, getNodeList().length - 1))
     }
     ipcRenderer.on(LOAD_BOOK, loadBookListener)
 
     return () => {
       ipcRenderer.off(LOAD_BOOK, loadBookListener)
     }
-  }, [bookInfo])
+  }, [bookInfo, renderMode])
 
   /** 响应样式变更 */
   const [contentStyle, setContentStyle] = useState({})
@@ -750,9 +877,7 @@ export default function Reader ({
   }
   useEffect(() => {
     const timer = setTimeout(handleChangeColorStyle, 200)
-    return () => {
-      clearTimeout(timer)
-    }
+    return () => clearTimeout(timer)
   }, [
     textColor, backgroundColor, cColorPlan
   ])
@@ -790,9 +915,13 @@ export default function Reader ({
       color: ${backgroundColor} !important;
       background-color: ${color} !important;
     }
+    .reader-content > div > *:nth-child(${highlightCount + 1}) {
+      background-color: ${getComplementaryColor(backgroundColor)};
+      color: ${backgroundColor};
+    }
     `
     setColorCSSText(colorCSSText)
-  }, [styleCSS])
+  }, [styleCSS, highlightCount])
 
   const [fontCSSText, setFontCSSText] = useState('')
   const handleChangeFontStyle = () => {
@@ -801,7 +930,7 @@ export default function Reader ({
       margin-bottom: ${lineHeight}px;
     }
     .reader-content > div > *::before {
-      width: ${textIndent}em;
+      width: ${textIndent * fontSize}px;
     }
     `
     setContentStyle(style => Object.assign({}, style, {
@@ -809,9 +938,10 @@ export default function Reader ({
       fontSize: fontSize + 'px',
     }))
     setFontCSSText(CSSText)
-    parseProg(progress)
+    parseLineCount(lineCount)
   }
   useEffect(() => {
+    setEventLock(true)
     const timer = setTimeout(handleChangeFontStyle, 300)
     return () => {
       clearTimeout(timer)
@@ -854,16 +984,8 @@ export default function Reader ({
   /** 搜索结果反馈 */
   useEffect(() => {
     const handleSearchResult = (event: Electron.IpcRendererEvent, result: any) => {
-      const flatedResult: any = []
       setIsWaiting(false)
-      result.forEach((res: any, index: number) => {
-          const { result: cRes, id } = res
-          cRes.forEach((resMap: any[], i: number) => {
-            const [str, prog] = resMap
-            flatedResult.push([id, str, prog])
-          })
-      })
-      setSearchResult(flatedResult)
+      setSearchResult(result)
     }
     ipcRenderer.on(SEARCH_RESULT, handleSearchResult)
 
@@ -900,40 +1022,44 @@ export default function Reader ({
         onClick={ () => { setIsToolsActive(false); clearTimeout(mouseEventTimer.current) } }
         style={ contentStyle }
       >
-        <div
-          style={{
-            display: renderMode === 'page' ? '' : 'none',
-            position: 'fixed',
-            left: 0,
-            bottom: 0,
-            width: progress * 100 + '%',
-            height: '6px',
-            backgroundColor: styleCSS.color,
-            transition: 'width .15s ease-in-out, background .3s ease',
-          }}
-        ></div>
         {
           (() => {
             if (bookInfo.hash !== '' && renderMode === 'page') {
-              let total = (computeTotalRenderCount() + 1).toString()
+              const totalRenderCount = computeTotalRenderCount()
+              let total = (totalRenderCount + 1).toString()
               let current = (renderCount + 1).toString()
-              return (<p
-                style={{
-                  display: 'inline-block',
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  bottom: '12px',
-                  margin: '0',
-                  fontSize: '12px',
-                  color: styleCSS.color,
-                  textAlign: 'center',
-                  fontWeight: 'bold',
-                  userSelect: 'none',
-                }}
-              >
-                {`${'0'.repeat(Math.max(total.length - current.length, 0))}${current} / ${total}`}
-              </p>)
+              return (
+                <>
+                  <div
+                    style={{
+                      position: 'fixed',
+                      left: 0,
+                      bottom: 0,
+                      width:  Math.floor(renderCount / totalRenderCount * 100) + '%',
+                      height: '6px',
+                      backgroundColor: styleCSS.color,
+                      transition: 'width .15s ease-in-out, background .3s ease',
+                    }}
+                  ></div>
+                  <p
+                    style={{
+                      display: 'inline-block',
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      bottom: '12px',
+                      margin: '0',
+                      fontSize: '12px',
+                      color: styleCSS.color,
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                      userSelect: 'none',
+                    }}
+                  >
+                    {`${'0'.repeat(Math.max(total.length - current.length, 0))}${current} / ${total}`}
+                  </p>
+                </>
+              )
             }
             return null
           })()
@@ -955,13 +1081,7 @@ export default function Reader ({
           <span className="ri-moon-fill" style={{ margin: 0 }}></span>
         </span>
         <div
-          dangerouslySetInnerHTML={{
-            __html: content
-              .split(/[\r\n]+/)
-              .filter(line => /\S+/.test(line))
-              .map(str => `<p>${str.trim()}</p>`)
-              .join('')
-          }}
+          dangerouslySetInnerHTML={{ __html: content }}
           ref={ renderEl }
           style={{
             transform: renderCount > 0 && renderMode === 'page'
@@ -1058,9 +1178,10 @@ export default function Reader ({
           <span className="reader-tool-tips">返回</span>
         </i>
         {
-          bookInfo.bookmark.detail.some(([spine, prog]) => 
-          spine === pageNumber && (Math.abs((prog * 100) - (progress * 100)) < 3)
-        )
+          bookInfo.bookmark.detail[pageNumber] &&
+          bookInfo.bookmark.detail[pageNumber].some(
+            ({ range }) => Array.isArray(range) && range.includes(lineCount)
+          )
           ? (
             <i
               className="reader-tool common-active ri-bookmark-fill reader-tool-enabled"
@@ -1340,21 +1461,34 @@ export default function Reader ({
               className="s-m-input"
               style={{ fontSize: '14px', boxSizing: 'border-box', lineHeight: '1.1' }}
               spellCheck="false"
-              onInput={(e: any) => setKeyword((e.target as HTMLInputElement).value.trim())}
+              onInput={(e: any) => setKeyword((e.target as HTMLInputElement).value)}
               value={ keyword }
             />
           </div>
           <div
             style={{ display: isWaiting ? '' : 'none' }}
-            className={
-              classNames(
-                's-m-s-loading'
-              )
-            }
+            className="s-m-s-loading"
           >
             <div className="s-m-s-loading-slider"></div>
           </div>
-          <div className="s-m-search-result" onClick={ handleClickSearchResult }>
+          {
+            searchResult.length > 0
+            ? (
+              <span
+                style={{
+                  position: 'absolute',
+                  right: '20px',
+                  top: '48px',
+                  fontSize: '14px',
+                  color: '#b9b9b9',
+                }}
+              >
+                找到约 {searchResult.length.toLocaleString()} 条结果
+              </span>
+            )
+            : null
+          }
+          <div className="s-m-search-result" onClick={ handleClickToJump }>
             <FixedSizeList
               width={ 500 }
               height={ 220 }
@@ -1363,22 +1497,23 @@ export default function Reader ({
             >
               {
                 ({index, style}) => {
-                  const [id, str, prog] = searchResult[index]
-                  const navLabel = navMap.current[id]
+                  const {id, text, lineCount, pageNumber} = searchResult[index]
                   const { href } = bookInfo.manifest[id]
-                  const pageNumber = bookInfo.spine.indexOf(id)
+                  const navLabel = typeof navMap.current[id] === 'string'
+                    ? decodeHTMLEntities(navMap.current[id])
+                    : `章节 ${pageNumber + 1}`
                   return (
                     <div
                       style={ style }
                       data-id={ id }
                       data-href={ href }
-                      data-prog={ prog }
+                      data-line-count={ lineCount }
                       key={ index }
                       className="s-m-search-result-item common-active"
                     >
-                      <p className="s-m-search-result-title">{ decodeHTMLEntities(typeof navLabel === 'string' ? navLabel : `章节 ${pageNumber + 1}`) }</p>
-                      <p className="s-m-search-result-text">{ decodeHTMLEntities(str) }</p>
-                      <span className="s-m-search-result-prog">{ Math.floor(prog * 100) }</span>
+                      <p className="s-m-search-result-title">{ navLabel }</p>
+                      <p className="s-m-search-result-text" dangerouslySetInnerHTML={{ __html: text }}></p>
+                      <span className="s-m-search-result-count">{ lineCount + 1 }</span>
                     </div>
                   )
                 }
@@ -1487,7 +1622,7 @@ export default function Reader ({
               : 'translate3d(100%, 0, 0)',
             transition: 'transform .2s ease-out'
           }}
-          onClick={ handleClickBookmark }
+          onClick={ handleClickToJump }
           ref={ bookmarkList }
         >
           <div
@@ -1500,26 +1635,41 @@ export default function Reader ({
           >
             {
               bookInfo.hash !== '' &&
-              bookInfo.bookmark.detail.map(([spine, progress], index) => {
-                const id = bookInfo.spine[spine]
+              Object.entries(bookInfo.bookmark.detail).map(([keyName, bookmarks]) => {
+                const pageNumber = parseInt(keyName)
+
+                const id = bookInfo.spine[pageNumber]
                 const { href } = bookInfo.manifest[id]
                 const navLabel = typeof navMap.current[id] === 'string'
                   ? navMap.current[id]
-                  : `章节 ${ spine + 1 }`
+                  : `章节 ${ pageNumber + 1 }`
                 const decodedNavLabel = decodeHTMLEntities(navLabel)
-                return (
-                  <p
-                    data-href={ href }
-                    data-prog={ progress }
-                    data-id={ id }
-                    className="common-active reader-bookmark"
-                    key={ index }
-                    title={ decodedNavLabel }
-                  >
-                    { decodedNavLabel }
-                    <span className="reader-bookmark-prog">{ Math.floor(progress * 100) + '%' }</span>
-                  </p>
-                )
+                return bookmarks.map(({ text, range, overflow }) => {
+                  const lineCount = range.slice(-1)[0]
+                  return (
+                    <div
+                      data-href={ href }
+                      data-line-count={ lineCount }
+                      data-range={ range }
+                      data-id={ id }
+                      className="common-active reader-bookmark flex-box"
+                      key={ `${pageNumber}-${lineCount}` }
+                    >
+                      <span className="reader-bookmark-title">{ decodedNavLabel }</span>
+                      <p
+                        className={
+                          classNames(
+                            'reader-bookmark-text',
+                            { 'reader-bookmark-overflow': overflow }
+                          )
+                        }
+                      >
+                        { text }
+                      </p>
+                      <span className="reader-bookmark-count">{ lineCount + 1 }</span>
+                    </div>
+                  )
+                })
               })
             }
           </div>
@@ -1545,7 +1695,10 @@ export default function Reader ({
                 className={
                   classNames(
                     'reader-tool common-active',
-                    { 'reader-tool-disabled': bookInfo.bookmark.detail.length === 0 }
+                    { 'reader-tool-disabled': 
+                      Object.entries(bookInfo.bookmark.detail)
+                        .reduce((prev, current) => (prev + current[1].length), 0) === 0
+                    }
                   )
                 }
                 onClick={handleEmptyBookmark}

@@ -25,6 +25,7 @@ import { findFile } from '@utils/findFile'
 import { _Promise } from '@utils/promise-extends'
 import { recursiveDelete } from '@utils/recursiveDelete'
 import { debounce } from '@utils/debounce'
+import convertEPUB from '../convertEPUB'
 
 function choosePath (pathA: string, pathB: string) {
   return process.env.NODE_ENV === 'development'
@@ -81,34 +82,38 @@ function init () {
         })
         event.reply(LOAD_LIBRARY, library)
       } else {
-        library = JSON.parse(data)
-        const tasks: any = []
-
-        if (library.shelf.length === 0) {
-          event.reply(LOAD_LIBRARY, library)
-        } else {
-          library.shelf.forEach(hash => {
-            tasks.push(new Promise((res, rej) => {
-              fs.readFile(path.resolve(DATA_PATH, hash, '.infomation'), { encoding: 'utf-8' }, (err, data) => {
-                if (err) {
-                  rej(hash)
-                } else {
-                  res(JSON.parse(data))
-                }
-              })
-            }))
-          })
-          _Promise
-            .finish(tasks)
-            .then(({ resolve, reject }) => {
-              resolve.forEach((infomation: Infomation) => {
-                const { hash } = infomation
-                
-                library.data[hash] = Object.assign({}, library.data[hash], infomation)
-              })
-              library.shelf = library.shelf.filter(hash => !reject.includes(hash))
-              event.reply(LOAD_LIBRARY, library)
+        try{
+          library = JSON.parse(data)
+          const tasks: any = []
+  
+          if (library.shelf.length === 0) {
+            event.reply(LOAD_LIBRARY, library)
+          } else {
+            library.shelf.forEach(hash => {
+              tasks.push(new Promise((res, rej) => {
+                fs.readFile(path.resolve(DATA_PATH, hash, '.infomation'), { encoding: 'utf-8' }, (err, data) => {
+                  if (err) {
+                    rej(hash)
+                  } else {
+                    res(JSON.parse(data))
+                  }
+                })
+              }))
             })
+            _Promise
+              .finish(tasks)
+              .then(({ resolve, reject }) => {
+                resolve.forEach((infomation: Infomation) => {
+                  const { hash } = infomation
+                  
+                  library.data[hash] = Object.assign({}, library.data[hash], infomation)
+                })
+                library.shelf = library.shelf.filter(hash => !reject.includes(hash))
+                event.reply(LOAD_LIBRARY, library)
+              })
+          }
+        } catch (err) {
+          console.log(err)
         }
       }
     })
@@ -144,37 +149,28 @@ function init () {
   })
 
   /** 获取书籍内容 */
-  ipcMain.on(READ_BOOK, (event: Electron.IpcMainEvent, { hash, href, format, progress }) => {
+  ipcMain.on(READ_BOOK, (event: Electron.IpcMainEvent, { hash, href, format, lineCount }) => {
     try {
       if (format === 'EPUB') {
         const resolvedPath = findFile(path.basename(href), path.resolve(DATA_PATH, hash))
         
         fs.readFile(resolvedPath[0], { encoding: 'utf-8' }, (err, data) => {
-          const start = data.indexOf('<body')
-          const end = data.indexOf('</body>')
-          const content = data.slice(start, end)
-            /** 去除标签 */
-            .replace(/<script\b[^>]*>[\s\S]*<\/script>/g, '')
-            .replace(/<\/?[^>]+>/g, fragment => {
-              switch (true) {
-                case /^<\/?(ruby|rtc?|rp|rb)/.test(fragment):
-                  return fragment
-                case /^<\/?(p|li)/.test(fragment):
-                  return '\n'
-                default:
-                  return ''
-              }
+            event.reply(LOAD_BOOK, {
+              content: convertEPUB(data).map(node => node.toString()).join(''),
+              status: 'sucess',
+              href,
+              format,
+              lineCount
             })
-          event.reply(LOAD_BOOK, { content, status: 'sucess', href, format, progress })
         })
       } else {
         const resolvedPath = findFile('.content', path.resolve(DATA_PATH, hash))
         fs.readFile(resolvedPath[0], { encoding: 'utf-8' }, (err, data) => {
-          event.reply(LOAD_BOOK, { content: JSON.parse(data), status: 'sucess', href, format, progress })
+          event.reply(LOAD_BOOK, { content: JSON.parse(data), status: 'sucess', href, format, lineCount })
         })
       }
     } catch (err) {
-      event.reply(LOAD_BOOK, { content: null, status: 'fail', href, format, progress })
+      event.reply(LOAD_BOOK, { content: null, status: 'fail', href, format, lineCount })
     }
   })
 
@@ -207,7 +203,7 @@ function init () {
   /** 处理全屏切换 */
   ipcMain.on(TOGGLE_FULLSCREEN, (event: Electron.IpcMainEvent, status) => {
     const win = BrowserWindow.getFocusedWindow()
-    win.setFullScreen(status)
+    win && win.setFullScreen(status)
   })
 
   /** 保存library */
@@ -215,6 +211,7 @@ function init () {
     const data = Object.entries(library.data)
     const filtedData: any = {}
 
+    /** 过滤 Bookmark 外的属性 */
     for (let i = 0, len = data.length; i < len; i++) {
       const [hash, bookInfo] = data[i]
       filtedData[hash] = { bookmark: bookInfo.bookmark }
