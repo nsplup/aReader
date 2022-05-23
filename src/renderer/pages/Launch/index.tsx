@@ -229,10 +229,8 @@ function Launch ({
             {
               library && library.shelf.map((sha256, index) => {
                 const { hash, title, cover, format, bookmark, spine } = library.data[sha256]
-                const { history } = Object.assign({ history: [] }, bookmark)
-                const prog = history.length === 2
-                  ? Math.floor((history[0] + 1) / spine.length * 100)
-                  : 0
+                const { pageNumber } = bookmark.trace
+                const prog = Math.floor(pageNumber / (spine.length - 1) * 100)
 
                 return (<Book
                   hash={ hash }
