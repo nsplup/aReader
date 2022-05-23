@@ -689,6 +689,15 @@ export default function Reader ({
     current.scrollToItem(isNavShouldSquash ? 0 : pageNumber, 'center')
   }
 
+  /** 处理A标签跳转 */
+  const handleATagClick = (e: React.MouseEvent) => {
+    const { target } = e
+
+    if ((target as HTMLElement).tagName.toUpperCase() === 'A') {
+      e.preventDefault()      
+    }
+  }
+
   /** 历史记录、书签保存及上传 */
   useEffect(() => {
     if (typeof library === 'object' && isReaderActive) {
@@ -894,6 +903,7 @@ export default function Reader ({
   const [ColorCSSText, setColorCSSText] = useState('')
   useEffect(() => {
     const { color, backgroundColor, cursor } = styleCSS
+    const complementaryColor = getComplementaryColor(backgroundColor)
     let colorCSSText = `
     .reader-wrapper * { cursor: ${cursor} };
     .reader-content::-webkit-scrollbar {
@@ -916,8 +926,8 @@ export default function Reader ({
       background-color: ${color} !important;
     }
     .reader-content > div > *:nth-child(${highlightCount + 1}) {
-      background-color: ${getComplementaryColor(backgroundColor)};
-      color: ${backgroundColor};
+      background-color: ${complementaryColor} !important;
+      color: ${backgroundColor} !important;
     }
     `
     setColorCSSText(colorCSSText)
@@ -1082,6 +1092,7 @@ export default function Reader ({
         </span>
         <div
           dangerouslySetInnerHTML={{ __html: content }}
+          onClick={ handleATagClick }
           ref={ renderEl }
           style={{
             transform: renderCount > 0 && renderMode === 'page'

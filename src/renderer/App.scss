@@ -265,6 +265,18 @@ input[type=number]::-webkit-outer-spin-button {
         content: '';
       }
     }
+    & a {
+      text-decoration: underline;
+      cursor: pointer;
+      transition: opacity .3s ease-out;
+
+      &:hover {
+        opacity: .5;
+      }
+      &:active {
+        opacity: .7;
+      }
+    }
   }
 
   & rt, & rtc {
