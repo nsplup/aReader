@@ -694,7 +694,25 @@ export default function Reader ({
     const { target } = e
 
     if ((target as HTMLElement).tagName.toUpperCase() === 'A') {
-      e.preventDefault()      
+      const [href, anchor] = (target as HTMLLinkElement).getAttribute('href')
+        .split('#')
+      const { spine, manifest } = bookInfo
+      const matched = Object.entries(manifest)
+        .filter(([id, { href: iHref }]) => href === iHref)
+
+      if (matched.length > 0) {
+        const [id] = matched[0]
+        const index = spine.indexOf(id)
+        const cId = spine[pageNumber]
+        if (id !== cId) {
+          handleJump(href)
+          setPageNumber(index)
+          setJumpValue(index + 1)
+        }
+      }
+      /** 强制刷新组件 */
+      setTime(Date.now())
+      e.preventDefault()
     }
   }
 

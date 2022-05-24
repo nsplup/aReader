@@ -266,15 +266,16 @@ input[type=number]::-webkit-outer-spin-button {
       }
     }
     & a {
+      display: inline-block;
       text-decoration: underline;
       cursor: pointer;
-      transition: opacity .3s ease-out;
+      transition: opacity .3s ease-out, transform .3s ease-out;
 
       &:hover {
-        opacity: .5;
+        opacity: .6;
       }
       &:active {
-        opacity: .7;
+        transform: scale(.98);
       }
     }
   }
