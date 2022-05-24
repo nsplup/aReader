@@ -278,6 +278,18 @@ input[type=number]::-webkit-outer-spin-button {
         transform: scale(.98);
       }
     }
+    & hr {
+      margin: 50px 0;
+      border: solid;
+      border-left: none;
+      border-right: none;
+      border-width: 1.5px;
+      border-bottom: none;
+      opacity: .3;
+      &::before {
+        display: none !important;
+      }
+    }
   }
 
   & rt, & rtc {

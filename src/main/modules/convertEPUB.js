@@ -2,7 +2,8 @@ const { parse } = require('node-html-parser')
 
 const ignoreList = [
   'ruby',
-  'rtc?',
+  'rt',
+  'rtc',
   'rp',
   'rb',
   'p',
@@ -39,7 +40,7 @@ function convertEPUB (data) {
   return parse(content).childNodes
     .filter((node) => {
       return node.innerText.replace(/\s|(&nbsp;)/g, '').length > 0
-      || (/<(img|image)[^>]+>/gi).test(node.toString())
+      || (/<(img|image|hr)[^>]+>/gi).test(node.toString())
     })
 }
 
