@@ -11,7 +11,6 @@ import { getComplementaryColor } from '@utils/getComplementaryColor'
 import { LOAD_BOOK, READ_BOOK, SEARCH_RESULT, START_SEARCH, STOP_SEARCH, TOGGLE_FULLSCREEN } from '@constants'
 
 import { decodeHTMLEntities } from '@utils/decodeEntities'
-import { getStringCount } from '@utils/getStringCount'
 
 const searchPlaceholder = require('@static/illustration/undraw_Web_search_re_efla.svg').default
 
@@ -88,24 +87,44 @@ const DisabledSelectInput = React.forwardRef((props: any, ref) => {
   )
 })
 
-const isInViewPort = (element: HTMLElement) => {
+const computeElementOverflowOrNot = (el: HTMLElement) => {
   const viewWidth = window.innerWidth || document.documentElement.clientWidth
-  const viewHeight = window.innerHeight || document.documentElement.clientHeight
-  const {
-    top,
-    right,
-    bottom,
-    left,
-  } = element.getBoundingClientRect()
+  const { width } = el.getBoundingClientRect()
+  return width - 100 + 70 > viewWidth
+}
+/**
+ * @returns [rect, el, lineCount, isOverflow]
+ */
+const getVisibleElements = (nodeList: HTMLElement[]) => {
+  const computedChildren = nodeList
+    .map((el, lineCount) => (
+      [el.getBoundingClientRect(), el, lineCount, (computeElementOverflowOrNot(el))]
+    ))
+  const isScrollMode = (
+    new Set(computedChildren.map(([rect]) => Math.floor((rect as DOMRect).x)))
+      .size
+  ) === 1
 
-  return (
-    top >= 0 &&
-    left >= 0 &&
-    right <= viewWidth &&
-    bottom <= viewHeight
-  )
+  return computedChildren.filter(([rect, el, lineCount, isOverflow]) => {
+    if (isScrollMode) {
+      const { bottom, top, height } = rect as DOMRect
+      const viewHeight = window.innerHeight || document.documentElement.clientHeight
+
+      return (top >= 0 && top <= viewHeight) ||
+      Math.abs(bottom) + Math.abs(top) === height
+    } else {
+      const { left, right, width } = rect as DOMRect
+
+      return Math.abs(left - 35) < 1 ||
+        (
+          isOverflow &&
+          (Math.abs(left) + Math.abs(right) === width)
+        )
+    }
+  })
 }
 
+/** 移动至导入模块 */
 const convertContent = (content: string) => {
   const lines = content.split(/[\r\n]+/)
   let startIndex, endIndex
@@ -270,6 +289,7 @@ export default function Reader ({
       setPageNumber(0)
       setJumpValue(1)
       setContent('')
+      setRenderCount(0)
     }, 150)
   }
 
@@ -290,10 +310,10 @@ export default function Reader ({
         .filter(({ range }) => !range.includes(lineCount))
     } else {
       const nodeList = getNodeList()
-      const computedChildren = nodeList
-        .map((el, lineCount) => [lineCount, el])
-        .filter(([lineCount, el]) => isInViewPort(el as HTMLElement))
+      const computedChildren = getVisibleElements(nodeList as HTMLElement[])
+        .map(([ignore, el, lineCount]) => [lineCount, el])
         .slice(-3)
+
       const range = Array.from(
         new Set(
           computedChildren
@@ -311,7 +331,6 @@ export default function Reader ({
         {
           range,
           text,
-          overflow: getStringCount(text) >= 500
         }
       )
     }
@@ -346,18 +365,15 @@ export default function Reader ({
 
   const [renderCount, setRenderCount] = useState(0)
   const getTraceElement = () => {
-    const { current } = renderEl
-    const computedChildren = Array.from(current.children)
-      .filter(node => (node as HTMLElement).getAttribute('not-content') !== 'true')
-      .map((el, lineCount) => [lineCount, el])
-      .filter(([lineCount, el]) => isInViewPort(el as HTMLElement))
+    const computedChildren = getVisibleElements(getNodeList() as HTMLElement[])
+      .map(([ignore, el, lineCount]) => [lineCount, el])
     
     const { length } = computedChildren
     const lastNode = computedChildren[length - 1]
 
     return Array.isArray(lastNode)
       ? lastNode
-      : [0, 0, null]
+      : [0, null]
   }
   const convertTraceToLineCount = useCallback((() => {
     let timer: any
@@ -370,18 +386,9 @@ export default function Reader ({
     }
   })(), [renderMode])
   const computeTotalRenderCount = () => {
-    const { current } = renderEl
-    const { offsetWidth } = current
-    const nodeList = getNodeList()
-    const { length } = nodeList
-    if (length > 0) {
-      const lastNode = nodeList[length - 1]
-      const { offsetLeft } = lastNode as HTMLElement
-      
-      return Math.floor(offsetLeft / (offsetWidth + 100))
-    } else {
-      return 0
-    }
+    const { offsetWidth, scrollWidth } = renderEl.current
+
+    return Math.floor(scrollWidth / (offsetWidth + 100))
   }
   const handleChangeRenderCount = (offset: number) => {
     if (renderMode === 'page') {
@@ -407,24 +414,28 @@ export default function Reader ({
     clearTimeout(resetEventLockTimer.current)
     resetEventLockTimer.current = setTimeout(() => {
       setEventLock(false)
-    }, 300)
+    }, 320)
     if (renderMode === 'scroll' && !eventLock.current) {
       convertTraceToLineCount()
     }
   }
 
   const parseLineCount = (lineCount: number) => {
-    const { current } = renderEl
-    const { offsetWidth } = current
+    const { offsetWidth } = renderEl.current
     const nodeList = getNodeList()
     const targetLine = nodeList[
       clamp(lineCount, 0, nodeList.length - 1)
     ] as HTMLElement
     if (targetLine) {
       if (renderMode === 'page') {
-        setRenderCount(Math.floor(targetLine.offsetLeft / (offsetWidth + 100)))
+        if (!isFinite(lineCount)) {
+          setRenderCount(computeTotalRenderCount())
+        } else {
+          setRenderCount(Math.floor(targetLine.offsetLeft / (offsetWidth + 100)))
+        }
       } else {
         const { current } = contentEl
+        const distance = parseInt(window.getComputedStyle(current)['fontSize'])
 
         switch (lineCount) {
           case 0:
@@ -434,10 +445,11 @@ export default function Reader ({
             current.scrollTo(0, current.scrollHeight)
             break
           default:
-            // targetLine.scrollIntoView(false)
-            current.scrollTo(0, targetLine.offsetTop - current.offsetHeight)
+            current.scrollTo(0, targetLine.offsetTop - current.offsetHeight + (distance * 2))
         }
       }
+    } else if (nodeList.length === 0 && lineCount === 0) {
+      setRenderCount(0)
     }
   }
 
@@ -701,8 +713,15 @@ export default function Reader ({
     const { target } = e
 
     if ((target as HTMLElement).tagName.toUpperCase() === 'A') {
-      const [href, anchor] = (target as HTMLLinkElement).getAttribute('href')
+      let [href, anchor]: string[]|string[][] = (target as HTMLLinkElement).getAttribute('href')
         .split('#')
+
+      /** 修改EPUB数据结构前的权宜之计 */
+      while (href.startsWith('.')) {
+        href = href.split('/')
+        href = href.slice(1).join('/')
+      }
+
       const { spine, manifest } = bookInfo
       const matched = Object.entries(manifest)
         .filter(([id, { href: iHref }]) => href === iHref)
@@ -747,6 +766,8 @@ export default function Reader ({
     clearTimeout(resizeTimer.current)
     resizeTimer.current = setTimeout(() => {
       parseLineCount(lineCount)
+      /** 强制刷新组件 */
+      setTime(Date.now())
     }, 300)
   }
 
@@ -954,9 +975,6 @@ export default function Reader ({
       background-color: ${complementaryColor} !important;
       color: ${backgroundColor} !important;
     }
-    .reader-content > div > *::before {
-      background-color: ${color} !important;
-    }
     `
     setColorCSSText(colorCSSText)
   }, [styleCSS, highlightCount])
@@ -966,9 +984,7 @@ export default function Reader ({
     const CSSText = `
     .reader-content > div > * {
       margin-bottom: ${lineHeight}px;
-    }
-    .reader-content > div > *::before {
-      margin-left: ${textIndent * fontSize}px;
+      text-indent: ${textIndent * fontSize}px;
     }
     `
     setContentStyle(style => Object.assign({}, style, {
@@ -1066,6 +1082,9 @@ export default function Reader ({
               const totalRenderCount = computeTotalRenderCount()
               let total = (totalRenderCount + 1).toString()
               let current = (renderCount + 1).toString()
+              let width = Math.floor(renderCount / totalRenderCount * 100)
+              width = isNaN(width) ? 100 : width
+
               return (
                 <>
                   <div
@@ -1073,7 +1092,7 @@ export default function Reader ({
                       position: 'fixed',
                       left: 0,
                       bottom: 0,
-                      width:  Math.floor(renderCount / totalRenderCount * 100) + '%',
+                      width: width + '%',
                       height: '6px',
                       backgroundColor: styleCSS.color,
                       transition: 'width .15s ease-in-out, background .3s ease',
@@ -1683,7 +1702,7 @@ export default function Reader ({
                   ? navMap.current[id]
                   : `章节 ${ pageNumber + 1 }`
                 const decodedNavLabel = decodeHTMLEntities(navLabel)
-                return bookmarks.map(({ text, range, overflow }) => {
+                return bookmarks.map(({ text, range }) => {
                   const lineCount = range.slice(-1)[0]
                   return (
                     <div
@@ -1695,14 +1714,7 @@ export default function Reader ({
                       key={ `${pageNumber}-${lineCount}` }
                     >
                       <span className="reader-bookmark-title">{ decodedNavLabel }</span>
-                      <p
-                        className={
-                          classNames(
-                            'reader-bookmark-text',
-                            { 'reader-bookmark-overflow': overflow }
-                          )
-                        }
-                      >
+                      <p className="reader-bookmark-text">
                         { text }
                       </p>
                       <span className="reader-bookmark-count">{ lineCount + 1 }</span>

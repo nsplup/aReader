@@ -39,7 +39,6 @@ interface Bookmark {
 interface BookmarkDetail {
   range: number[]
   text: string
-  overflow: boolean
 }
 
 interface UserConfig {
