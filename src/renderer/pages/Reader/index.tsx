@@ -459,6 +459,7 @@ export default function Reader ({
     }
   }, [renderMode])
 
+  /** 防止分页模式下元素被割裂 */
   useEffect(() => {
     const tags = [
       'rt',
@@ -472,11 +473,17 @@ export default function Reader ({
     const children = Array.from(current.children)
     
     children.forEach(el => {
-        const tagCounts = tags.reduce((prevCount, tag) => {
+        const hasTag = tags.reduce((prevCount, tag) => {
           return el.getElementsByTagName(tag).length + prevCount
-        }, 0)
-        if (tagCounts > 0) {
-          el.setAttribute('style', '-webkit-column-break-inside: avoid')
+        }, 0) > 0
+        const isInlineBlock = window.getComputedStyle(el).display === 'inline-block'
+        if (hasTag || isInlineBlock) {
+          el.setAttribute('style',
+            [
+              hasTag ? '-webkit-column-break-inside: avoid; ' : undefined,
+              isInlineBlock ? 'display: unset; ' : undefined,
+            ].join('')
+          )
         }
       })
 
@@ -947,6 +954,9 @@ export default function Reader ({
       background-color: ${complementaryColor} !important;
       color: ${backgroundColor} !important;
     }
+    .reader-content > div > *::before {
+      background-color: ${color} !important;
+    }
     `
     setColorCSSText(colorCSSText)
   }, [styleCSS, highlightCount])
@@ -958,7 +968,7 @@ export default function Reader ({
       margin-bottom: ${lineHeight}px;
     }
     .reader-content > div > *::before {
-      width: ${textIndent * fontSize}px;
+      margin-left: ${textIndent * fontSize}px;
     }
     `
     setContentStyle(style => Object.assign({}, style, {
