@@ -90,7 +90,10 @@ const DisabledSelectInput = React.forwardRef((props: any, ref) => {
 const computeElementOverflowOrNot = (el: HTMLElement) => {
   const viewWidth = window.innerWidth || document.documentElement.clientWidth
   const { width } = el.getBoundingClientRect()
-  return width - 100 + 70 > viewWidth
+  /** column-width: 600, column-gap: 100, padding: 70 */
+  const minPageWidth = 600 * 2 - 100 + 70
+
+  return width > Math.min(viewWidth, minPageWidth)
 }
 /**
  * @returns [rect, el, lineCount, isOverflow]
@@ -114,8 +117,9 @@ const getVisibleElements = (nodeList: HTMLElement[]) => {
       Math.abs(bottom) + Math.abs(top) === height
     } else {
       const { left, right, width } = rect as DOMRect
+      const viewWidth = window.innerWidth || document.documentElement.clientWidth
 
-      return Math.abs(left - 35) < 1 ||
+      return (left > 0 && left < viewWidth) ||
         (
           isOverflow &&
           (Math.abs(left) + Math.abs(right) === width)
@@ -428,10 +432,15 @@ export default function Reader ({
     ] as HTMLElement
     if (targetLine) {
       if (renderMode === 'page') {
-        if (!isFinite(lineCount)) {
-          setRenderCount(computeTotalRenderCount())
-        } else {
-          setRenderCount(Math.floor(targetLine.offsetLeft / (offsetWidth + 100)))
+        switch (lineCount) {
+          case 0:
+            setRenderCount(0)
+            break
+          case Infinity:
+            setRenderCount(computeTotalRenderCount())
+            break
+          default:
+            setRenderCount(Math.floor(targetLine.offsetLeft / (offsetWidth + 100)))
         }
       } else {
         const { current } = contentEl
