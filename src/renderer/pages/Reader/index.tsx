@@ -500,10 +500,9 @@ export default function Reader ({
         const isInlineBlock = window.getComputedStyle(el).display === 'inline-block'
         if (hasTag || isInlineBlock) {
           el.setAttribute('style',
-            [
-              hasTag ? '-webkit-column-break-inside: avoid; ' : undefined,
-              isInlineBlock ? 'display: unset; ' : undefined,
-            ].join('')
+            hasTag ?
+              '-webkit-column-break-inside: avoid;' :
+              ''
           )
         }
       })
@@ -747,8 +746,8 @@ export default function Reader ({
       }
       /** 强制刷新组件 */
       setTime(Date.now())
-      e.preventDefault()
     }
+    e.preventDefault()
   }
 
   /** 历史记录、书签保存及上传 */

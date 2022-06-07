@@ -808,13 +808,13 @@ input[type=number]::-webkit-outer-spin-button {
   &-text {
     display: -webkit-box;
     width: 100%;
-    max-height: 17em;
     overflow: hidden;
     margin: 10px 0;
 
     color: $common-text-description;
     text-overflow: ellipsis;
-    -webkit-line-clamp: 15;
+    line-height: 1.5;
+    -webkit-line-clamp: 10;
     -webkit-box-orient: vertical;
   }
 }
