@@ -389,14 +389,43 @@ export default function Reader ({
       }, 50)
     }
   })(), [renderMode])
+  const totalRenderCount = useRef(0)
+  const [recomputeTotalRenderCountCaller, setRecomputeTotalRenderCountCaller] = useState(0)
   const computeTotalRenderCount = () => {
-    const { offsetWidth, scrollWidth } = renderEl.current
+    const { offsetWidth } = renderEl.current
+    const nodeList = getNodeList()
+    const { length } = nodeList
 
-    return Math.floor(scrollWidth / (offsetWidth + 100))
+    if (length > 0) {
+      const lastNode = nodeList[length - 1] as HTMLElement
+      const { offsetLeft } = lastNode
+      const totalRenderCount = offsetLeft / (offsetWidth + 100)
+      /** 获取小数点第一位数 */
+      const difference = Math.floor(totalRenderCount * 10) - (Math.floor(totalRenderCount) * 10)
+
+      let result = Math.floor(totalRenderCount)
+
+      /** 跨页补偿 */
+      if (computeElementOverflowOrNot(lastNode) &&
+        (
+          difference === 5 ||
+          offsetWidth < (600 * 2 + 100) /** column-width: 600, column-gap: 100 */
+        )
+      ) {
+        result += 1
+      }
+
+      return result
+    }
+
+    return 0
   }
+  useEffect(() => {
+    totalRenderCount.current = computeTotalRenderCount()
+  }, [content, renderMode, recomputeTotalRenderCountCaller])
   const handleChangeRenderCount = (offset: number) => {
     if (renderMode === 'page') {
-      const totalCount = computeTotalRenderCount()
+      const totalCount = totalRenderCount.current
       const computedCount = clamp(renderCount + offset, 0, totalCount)
       setRenderCount(computedCount)
       convertTraceToLineCount()
@@ -437,7 +466,7 @@ export default function Reader ({
             setRenderCount(0)
             break
           case Infinity:
-            setRenderCount(computeTotalRenderCount())
+            setRenderCount(totalRenderCount.current)
             break
           default:
             setRenderCount(Math.floor(targetLine.offsetLeft / (offsetWidth + 100)))
@@ -774,6 +803,7 @@ export default function Reader ({
     clearTimeout(resizeTimer.current)
     resizeTimer.current = setTimeout(() => {
       parseLineCount(lineCount)
+      setRecomputeTotalRenderCountCaller(Date.now())
       /** 强制刷新组件 */
       setTime(Date.now())
     }, 300)
@@ -830,7 +860,7 @@ export default function Reader ({
             
             if (typeof offset === 'boolean') { return }
             if (renderMode === 'page') {
-              if (offset === 1 && renderCount === computeTotalRenderCount()) {
+              if (offset === 1 && renderCount === totalRenderCount.current) {
                 handleChangePage(1)
                 return
               } else if (offset === -1 && renderCount === 0) {
@@ -1001,6 +1031,7 @@ export default function Reader ({
     }))
     setFontCSSText(CSSText)
     parseLineCount(lineCount)
+    setRecomputeTotalRenderCountCaller(Date.now())
   }
   useEffect(() => {
     setEventLock(true)
@@ -1087,10 +1118,10 @@ export default function Reader ({
         {
           (() => {
             if (bookInfo.hash !== '' && renderMode === 'page') {
-              const totalRenderCount = computeTotalRenderCount()
-              let total = (totalRenderCount + 1).toString()
+              const totalCount = totalRenderCount.current
+              let total = (totalCount + 1).toString()
               let current = (renderCount + 1).toString()
-              let width = Math.floor(renderCount / totalRenderCount * 100)
+              let width = Math.floor(renderCount / totalCount * 100)
               width = isNaN(width) ? 100 : width
 
               return (
